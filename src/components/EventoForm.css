@@ -1,0 +1,21 @@
+/* src/components/EventoForm.css */
+
+/* Reutilizamos la mayoría de los estilos de PlayerForm.css */
+/* Si no tienes un CSS global, puedes copiar el contenido de PlayerForm.css aquí */
+
+.evento-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Estilos específicos si son necesarios */
+.evento-form .input-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.evento-form .input-group label {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}

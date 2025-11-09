@@ -1,0 +1,120 @@
+/* src/components/PlayerForm.css */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(17, 24, 39, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  background: linear-gradient(180deg, var(--color-surface) 0%, rgba(255,255,255,0.02) 100%);
+  padding: 2rem;
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 500px;
+  box-shadow: var(--shadow-2);
+  border: 1px solid var(--color-border);
+  backdrop-filter: blur(var(--glass-blur));
+  animation: slideIn 0.3s ease-out;
+  position: relative;
+  color: var(--color-text);
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--color-text);
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.modal-close-btn:hover { color: var(--color-text); }
+
+.player-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border);
+}
+
+/* Reutilizamos los estilos de input-group que ya tienes en otros CSS */
+.input-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-group label {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.input-group input,
+.input-group select {
+  padding: 0.75rem;
+  border-radius: var(--radius-m);
+  border: 1px solid var(--color-border);
+  background-color: rgba(255,255,255,0.04);
+  color: var(--color-text);
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+.input-group input:focus,
+.input-group select:focus { outline: none; border-color: rgba(0,230,255,0.35); box-shadow: 0 0 0 3px rgba(0,230,255,0.18); background-color: rgba(255,255,255,0.06); }
+
+/* Botones del modal */
+.btn-primary { background: linear-gradient(180deg, var(--color-primary), #00c98f); color: #051316; border: 1px solid transparent; }
+
+.btn-secondary { background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)); color: var(--color-text); border: 1px solid var(--color-border); }

@@ -1,0 +1,141 @@
+/* src/pages/GestionRolesPage.css - Unificación de estilo para Gestión de Roles */
+
+.page-section { max-width: 1200px; margin: 0 auto; padding: 0 6px; }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--color-border); }
+.section-header h1 { margin: 0; font-size: 1.6rem; }
+.section-sub { color: #90a4ae; font-size: 0.95rem; }
+
+.card { background: linear-gradient(180deg, rgba(12,18,24,0.7), rgba(12,18,24,0.5)); border: 1px solid rgba(255,255,255,0.16); border-radius: 14px; box-shadow: var(--shadow-2); backdrop-filter: blur(var(--glass-blur)); padding: 20px; margin-bottom: 16px; }
+
+/* Tabs estilo plataforma */
+.tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--color-border); margin-bottom: 16px; }
+.tab { background: transparent; color: #cfd8dc; border: 1px solid transparent; border-radius: 10px 10px 0 0; padding: 10px 12px; cursor: pointer; }
+.tab:hover { background: rgba(255,255,255,0.06); }
+.tab.active { color: #fff; background: rgba(33,150,243,0.15); border-color: rgba(33,150,243,0.25); box-shadow: inset 0 -3px 0 0 #2196f3; }
+
+/* Tabla */
+.card-table table { width: 100%; border-collapse: collapse; }
+.card-table th, .card-table td { padding: 12px; border-bottom: 1px solid var(--color-border); color: var(--color-text); }
+.card-table th { color: #90a4ae; font-weight: 800; text-transform: uppercase; font-size: 0.78rem; letter-spacing: 0.06em; }
+.card-table tr:hover { background: rgba(255,255,255,0.04); }
+
+/* ---- Tabla de Usuarios del Club ---- */
+.usuarios-section { margin-top: 2rem; }
+.usuarios-section h3 { margin-bottom: 1rem; font-size: 1.3rem; color: #eceff1; }
+
+.usuarios-table .table-header,
+.usuarios-table .table-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.5fr; /* Define las 4 columnas */
+  gap: 16px;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.usuarios-table .table-header {
+  color: #90a4ae;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  padding-bottom: 8px;
+}
+
+.usuarios-table .table-row:hover { background: rgba(255,255,255,0.04); border-radius: 10px; }
+
+.user-info { display: flex; flex-direction: column; }
+.user-info strong { color: #eef3f6; font-weight: 600; }
+.user-info .user-email { font-size: 0.9em; color: #90a4ae; }
+
+.role-badge { padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.8em; background: #37474f; color: #eceff1; }
+.role-badge.role-administrador_club { background: #1e88e5; }
+.role-badge.role-entrenador { background: #00897b; }
+.role-badge.role-asistente { background: #8e24aa; }
+.role-badge.role-jugador { background: #f9a825; color: #000; }
+
+.col-actions { text-align: right; }
+.role-selector { background: rgba(255,255,255,0.06); color: #cfd8dc; border: 1px solid var(--color-border); border-radius: 8px; padding: 6px 8px; }
+.current-user-badge { font-weight: 700; color: var(--color-primary); }
+
+
+
+
+/* Formularios */
+.form-row { margin-bottom: 14px; }
+.label { display: block; font-size: 0.9rem; color: #b0bec5; margin-bottom: 6px; }
+.input, .select { width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--color-border); border-radius: 10px; color: var(--color-text); }
+.input:focus, .select:focus { outline: 2px solid rgba(33,150,243,0.45); outline-offset: 2px; }
+
+/* Botones */
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 12px; padding: 10px 14px; font-weight: 700; cursor: pointer; border: 1px solid rgba(255,255,255,0.12); }
+.btn-primary { background: #2196f3; color: #fff; }
+.btn-primary:hover { background: #1e88e5; }
+.btn-secondary { background: transparent; color: #cfd8dc; border-color: var(--color-border); }
+.btn-secondary:hover { background: rgba(255,255,255,0.06); }
+
+/* Alerts */
+.alert-success { background: rgba(0,201,143,0.12); border: 1px solid rgba(0,201,143,0.35); color: #b9f6ca; padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; }
+.alert-error { background: rgba(244,67,54,0.12); border: 1px solid rgba(244,67,54,0.35); color: #ffcdd2; padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; }
+
+/* ---- Sistema de Permisos: unificación de diseño ---- */
+.permisos-info { display: grid; gap: 16px; }
+.permisos-info > h2 { margin: 0; font-size: 1.3rem; color: #eceff1; }
+.permisos-section h3, .jerarquia-section h3 { margin: 0 0 12px; color: #eef3f6; font-size: 1.15rem; letter-spacing: 0.02em; }
+
+.permisos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.permiso-card { 
+  background: #0b1217;
+  background-image: linear-gradient(180deg, rgba(7,12,16,0.85), rgba(10,16,20,0.7));
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 12px; box-shadow: var(--shadow-2); padding: 16px;
+  transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease; 
+}
+.permiso-card:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(33,150,243,0.18); border-color: rgba(33,150,243,0.28); }
+.permiso-card h4 { margin: 0 0 6px; color: #eceff1; font-size: 1rem; }
+.permiso-card p { margin: 0; color: #b0bec5; font-size: .95rem; line-height: 1.45; }
+
+.jerarquia-section .jerarquia-visual { display: grid; gap: 12px; }
+.nivel-jerarquia { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.rol-jerarquia { 
+  background: #0b1217 !important;
+  background-image: linear-gradient(180deg, rgba(7,12,16,0.85), rgba(10,16,20,0.7)) !important;
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 12px;
+  box-shadow: var(--shadow-2);
+  padding: 16px;
+  position: relative;
+}
+.rol-jerarquia h4 { margin: 0 0 10px; color: #ffffff; font-size: 1.08rem; font-weight: 800; letter-spacing: 0.015em; text-shadow: 0 0 12px rgba(33,150,243,0.18); }
+.rol-jerarquia p { margin: 0 0 10px; color: #cfd8dc; }
+.rol-jerarquia ul { margin: 0; padding-left: 18px; color: #e0e6e9; }
+
+/* superposición sutil para asegurar contraste */
+.rol-jerarquia::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 120% at 50% 0%, rgba(0,0,0,0.25), rgba(0,0,0,0));
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+/* Acento visual bajo el título de cada rol */
+.rol-jerarquia h4::after {
+  content: '';
+  display: block;
+  height: 2px;
+  width: 32px;
+  margin-top: 6px;
+  background: linear-gradient(90deg, #2196f3, rgba(33,150,243,0));
+  border-radius: 2px;
+}
+
+.rol-jerarquia.admin { box-shadow: inset 0 0 0 1px rgba(33,150,243,0.28); }
+.rol-jerarquia.entrenador { box-shadow: inset 0 0 0 1px rgba(0,150,136,0.28); }
+.rol-jerarquia.asistente { box-shadow: inset 0 0 0 1px rgba(156,39,176,0.28); }
+.rol-jerarquia.jugador { box-shadow: inset 0 0 0 1px rgba(255,193,7,0.28); }
+
+@media (max-width: 700px) {
+  .permisos-grid, .nivel-jerarquia { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,113 @@
+/* src/pages/Configuracion.css */
+
+/* Estilo para el párrafo de descripción */
+.config-descripcion {
+  color: #6b7280; /* Un gris más suave */
+  margin-top: -10px;
+  margin-bottom: 25px;
+  line-height: 1.6;
+}
+
+/* Estilo para el formulario de invitación */
+.form-invitar {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.form-invitar input {
+  flex-grow: 1;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background-color: #f8fafc;
+  color: #1a2530;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-invitar input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+.form-invitar button {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  background-color: #2563eb;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 1rem;
+  white-space: nowrap; /* Evita que el texto se parta */
+}
+
+.form-invitar button:hover {
+  background-color: #1d4ed8;
+}
+
+/* Mensajes de feedback */
+.mensaje-feedback {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.mensaje-feedback.exito {
+  background-color: #dcfce7; /* Verde claro */
+  color: #166534; /* Verde oscuro */
+}
+
+.mensaje-feedback.error {
+  background-color: #fee2e2; /* Rojo claro */
+  color: #991b1b; /* Rojo oscuro */
+}
+
+/* Lista de invitaciones */
+.lista-invitaciones {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.item-invitacion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.info-invitacion .email {
+  font-weight: 600;
+  color: #1a2530;
+}
+
+.info-invitacion .rol {
+  margin-left: 0.5rem;
+  font-size: 0.9em;
+  color: #6b7280;
+}
+
+.btn-cancelar {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-cancelar:hover {
+  background-color: #fecaca;
+  color: #7f1d1d;
+}

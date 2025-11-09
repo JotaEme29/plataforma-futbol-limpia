@@ -1,0 +1,261 @@
+/* src/styles/theme.css - Design tokens and modern football theme */
+
+:root {
+  /* Core palette - Light & Vibrant */
+  --color-bg: #f0f4f8;           /* Light blue-gray background */
+  --color-bg-2: #e2e8f0;         /* Slightly darker */
+  --color-elevated: #ffffff;     /* White elevated surfaces */
+  --color-surface: #ffffff;      /* White cards */
+  --color-surface-2: #f8fafc;    /* Very light gray */
+  --color-border: #e2e8f0;       /* Soft border */
+  --color-border-strong: #cbd5e1; /* Stronger border */
+
+  /* Football-inspired brand colors */
+  --color-primary: #3b82f6;      /* Football blue */
+  --color-primary-light: #60a5fa;
+  --color-primary-dark: #2563eb;
+  
+  --color-secondary: #8b5cf6;    /* Purple accent */
+  --color-secondary-light: #a78bfa;
+  
+  --color-success: #10b981;      /* Grass green - victories */
+  --color-success-light: #34d399;
+  --color-success-dark: #059669;
+  
+  --color-warning: #f59e0b;      /* Yellow card */
+  --color-warning-light: #fbbf24;
+  
+  --color-danger: #ef4444;       /* Red card */
+  --color-danger-light: #f87171;
+  --color-danger-dark: #dc2626;
+  
+  --color-info: #06b6d4;         /* Cyan info */
+  --color-info-light: #22d3ee;
+
+  /* Typography */
+  --color-text: #1e293b;         /* Almost black */
+  --color-text-secondary: #64748b; /* Medium gray */
+  --color-text-muted: #94a3af;   /* Light gray */
+  --color-text-inverse: #ffffff; /* White text */
+
+  /* Radii */
+  --radius-s: 8px;
+  --radius-m: 12px;
+  --radius-l: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+  --radius-full: 9999px;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Shadows - More pronounced for depth */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  
+  /* Colored shadows for emphasis */
+  --shadow-primary: 0 4px 14px rgba(59, 130, 246, 0.25);
+  --shadow-success: 0 4px 14px rgba(16, 185, 129, 0.25);
+  --shadow-danger: 0 4px 14px rgba(239, 68, 68, 0.25);
+  --shadow-warning: 0 4px 14px rgba(245, 158, 11, 0.25);
+
+  /* Legacy support */
+  --shadow-1: var(--shadow-sm);
+  --shadow-2: var(--shadow-md);
+  --shadow-3: var(--shadow-lg);
+  --shadow-glow-primary: var(--shadow-primary);
+  --shadow-glow-cyan: 0 4px 14px rgba(6, 182, 212, 0.25);
+  --glass-blur: 10px;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+  --gradient-success: linear-gradient(135deg, var(--color-success) 0%, var(--color-success-light) 100%);
+  --gradient-danger: linear-gradient(135deg, var(--color-danger) 0%, var(--color-danger-light) 100%);
+  --gradient-warning: linear-gradient(135deg, var(--color-warning) 0%, var(--color-warning-light) 100%);
+  --gradient-secondary: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-light) 100%);
+  
+  /* App background - Vibrant football-themed with patterns */
+  --gradient-app: 
+    linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+    linear-gradient(225deg, rgba(16, 185, 129, 0.06) 0%, transparent 50%),
+    repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(59, 130, 246, 0.02) 50px, rgba(59, 130, 246, 0.02) 51px),
+    repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(16, 185, 129, 0.02) 50px, rgba(16, 185, 129, 0.02) 51px),
+    linear-gradient(180deg, #e8f4f8 0%, #dbeafe 100%);
+  
+  /* Football field pattern */
+  --field-pattern: 
+    repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(16, 185, 129, 0.05) 40px, rgba(16, 185, 129, 0.05) 80px),
+    linear-gradient(180deg, rgba(16, 185, 129, 0.03), rgba(16, 185, 129, 0.08));
+}
+
+/* Base app background helper */
+.app-bg {
+  background: var(--gradient-app);
+}
+
+/* Utility classes for colors */
+.text-primary { color: var(--color-primary); }
+.text-success { color: var(--color-success); }
+.text-danger { color: var(--color-danger); }
+.text-warning { color: var(--color-warning); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-muted { color: var(--color-text-muted); }
+
+.bg-primary { background-color: var(--color-primary); }
+.bg-success { background-color: var(--color-success); }
+.bg-danger { background-color: var(--color-danger); }
+.bg-warning { background-color: var(--color-warning); }
+.bg-surface { background-color: var(--color-surface); }
+
+/* Border utilities */
+.border-primary { border-color: var(--color-primary); }
+.border-success { border-color: var(--color-success); }
+.border-danger { border-color: var(--color-danger); }
+.border-warning { border-color: var(--color-warning); }
+
+/* Football-themed decorative elements */
+.football-pattern {
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
+}
+
+.victory-glow {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3), 0 4px 14px rgba(16, 185, 129, 0.25);
+}
+
+.defeat-glow {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.3), 0 4px 14px rgba(239, 68, 68, 0.25);
+}
+
+.draw-glow {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.3), 0 4px 14px rgba(245, 158, 11, 0.25);
+}
+
+/* Animated gradient backgrounds */
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animated-gradient {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary), var(--color-primary));
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+/* Score display styles */
+.score-display {
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: 2.5rem;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+/* Match result indicators with vibrant styling */
+.result-victory {
+  color: var(--color-success);
+  border-left: 6px solid var(--color-success);
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.15), transparent);
+  box-shadow: inset 6px 0 0 var(--color-success);
+}
+
+.result-defeat {
+  color: var(--color-danger);
+  border-left: 6px solid var(--color-danger);
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.15), transparent);
+  box-shadow: inset 6px 0 0 var(--color-danger);
+}
+
+.result-draw {
+  color: var(--color-warning);
+  border-left: 6px solid var(--color-warning);
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.15), transparent);
+  box-shadow: inset 6px 0 0 var(--color-warning);
+}
+
+/* Vibrant card styles for football theme */
+.football-card {
+  background: linear-gradient(135deg, var(--color-surface) 0%, rgba(59, 130, 246, 0.05) 100%);
+  border: 3px solid transparent;
+  border-image: linear-gradient(135deg, var(--color-primary), var(--color-secondary)) 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.football-card::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.football-card:hover::before {
+  opacity: 0.1;
+}
+
+/* Neon glow effects for emphasis */
+.neon-primary {
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3), 0 0 30px rgba(59, 130, 246, 0.2);
+}
+
+.neon-success {
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5), 0 0 20px rgba(16, 185, 129, 0.3), 0 0 30px rgba(16, 185, 129, 0.2);
+}
+
+.neon-danger {
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5), 0 0 20px rgba(239, 68, 68, 0.3), 0 0 30px rgba(239, 68, 68, 0.2);
+}
+
+/* Striped patterns for headers */
+.striped-header {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color-primary),
+    var(--color-primary) 10px,
+    var(--color-primary-light) 10px,
+    var(--color-primary-light) 20px
+  );
+}
+
+/* Diagonal accent lines */
+.diagonal-accent {
+  position: relative;
+}
+
+.diagonal-accent::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100%;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 5px,
+    rgba(59, 130, 246, 0.1) 5px,
+    rgba(59, 130, 246, 0.1) 10px
+  );
+  pointer-events: none;
+}

@@ -1,0 +1,104 @@
+/* ============================================= */
+/* == Estilos para la Tarjeta de Jugador en Campo == */
+/* ============================================= */
+
+.player-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 110px;
+  padding: 8px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 2px solid transparent;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.dark .player-card {
+  background-color: rgba(31, 41, 55, 0.9); /* gray-800 con opacidad */
+  border-color: transparent;
+}
+
+.player-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+}
+
+.player-card.selected {
+  border-color: #3b82f6; /* blue-500 */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+}
+
+.player-card-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-weight: 600;
+}
+
+.player-card-number {
+  font-size: 0.8rem;
+  color: #6b7280; /* gray-500 */
+}
+
+.dark .player-card-number {
+  color: #9ca3af; /* gray-400 */
+}
+
+.player-card-name {
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* --- Controles de Evaluación --- */
+.player-card-controls {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  border-top: 1px solid #e5e7eb; /* gray-200 */
+  padding-top: 6px;
+  margin-top: 4px;
+}
+
+.dark .player-card-controls {
+  border-top-color: #4b5563; /* gray-600 */
+}
+
+.eval-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 1.4rem; /* Iconos más grandes */
+  line-height: 1;
+  transition: transform 0.1s ease, color 0.2s;
+}
+
+.eval-btn:active {
+  transform: scale(0.9);
+}
+
+.eval-btn.plus { color: #16a34a; } /* green-600 */
+.eval-btn.minus { color: #dc2626; } /* red-600 */
+.eval-btn.plus:hover { color: #15803d; } /* green-700 */
+.eval-btn.minus:hover { color: #b91c1c; } /* red-700 */
+
+.momentum-display {
+  font-size: 1.1rem;
+  font-weight: 700;
+  min-width: 30px;
+  text-align: center;
+}
+
+.momentum-positive { color: #16a34a; }
+.momentum-negative { color: #dc2626; }
+.momentum-neutral { color: #6b7280; }
+
+.dark .momentum-neutral {
+  color: #9ca3af;
+}
