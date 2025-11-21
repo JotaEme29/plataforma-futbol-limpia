@@ -41,28 +41,14 @@ function DetalleEvento() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('convocatoria');
-
-  const TabButton = ({ tabName, children, disabled = false }) => (
-    <button
-      onClick={() => setActiveTab(tabName)}
-      disabled={disabled}
-      className={`px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
-        activeTab === tabName
-          ? 'bg-blue-600 text-white shadow'
-          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-      }`}
-    >
-      {children}
-    </button>
-  );
-
+  
   // Estados de datos
   const [convocados, setConvocados] = useState([]);
   const [noConvocados, setNoConvocados] = useState([]);
   const [titulares, setTitulares] = useState([]);
   const [suplentes, setSuplentes] = useState([]);
   const [formacion, setFormacion] = useState('4-3-3');
-  const [jugadorParaIntercambio, setJugadorParaIntercambio] = useState(null); // Estado para el jugador seleccionado
+  const [jugadorParaIntercambio, setJugadorParaIntercambio] = useState(null);
 
   // Estados para "En Vivo"
   const [fase, setFase] = useState('preparacion');
@@ -70,11 +56,43 @@ function DetalleEvento() {
   const [segundosReloj, setSegundosReloj] = useState(0); 
   const [segundosAcumulados, setSegundosAcumulados] = useState(0); 
   const [acciones, setAcciones] = useState([]);
-  const [seleccionandoAccion, setSeleccionandoAccion] = useState(null); // { tipo: 'GOL' }
+  const [seleccionandoAccion, setSeleccionandoAccion] = useState(null);
   const [marcador, setMarcador] = useState({ local: 0, visitante: 0 });
   const [evaluaciones, setEvaluaciones] = useState({}); 
-  const [tiempoEnCampo, setTiempoEnCampo] = useState({}); // Para registrar minutos
+  const [tiempoEnCampo, setTiempoEnCampo] = useState({});
 
+  // --- Funciones auxiliares para determinar estado del evento ---
+  const eventoYaPaso = useMemo(() => {
+    if (!evento?.fecha) return false;
+    const fechaEvento = evento.fecha?.toDate ? evento.fecha.toDate() : new Date(evento.fecha);
+    const ahora = new Date();
+    return fechaEvento < ahora;
+  }, [evento]);
+
+  const partidoIniciado = useMemo(() => {
+    // Solo es true si el partido está en '1T', '2T', 'descanso', o 'finalizado'
+    // Si no hay fase o es 'preparacion', devuelve false
+    const iniciado = fase && fase !== 'preparacion' && fase !== '';
+    return iniciado;
+  }, [fase]);
+
+  const partidoFinalizado = useMemo(() => {
+    return fase === 'finalizado' || evento?.evaluado === true;
+  }, [fase, evento]);
+
+  const TabButton = ({ tabName, children, disabled = false }) => (
+    <button
+      onClick={() => setActiveTab(tabName)}
+      disabled={disabled}
+      className={`px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed border ${
+        activeTab === tabName
+          ? 'bg-gradient-to-r from-orange-500/40 via-amber-400/40 to-sky-500/40 text-white shadow border-black/20'
+          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-transparent'
+      }`}
+    >
+      {children}
+    </button>
+  );
 
   
   // Carga de datos inicial
@@ -97,7 +115,15 @@ function DetalleEvento() {
 
       const eventoData = { id: eventoSnap.id, ...eventoSnap.data() };
       setEvento(eventoData);
-      if (eventoData.evaluado) setActiveTab('evaluacion');
+      
+      // Determinar tab inicial según estado del evento
+      if (eventoData.evaluado || eventoData.fase === 'finalizado') {
+        setActiveTab('evaluacion'); // Si ya finalizó, mostrar solo evaluación
+      } else if (eventoData.fase && eventoData.fase !== 'preparacion') {
+        setActiveTab('en-vivo'); // Si está en curso, ir a En Vivo
+      } else {
+        setActiveTab('convocatoria'); // Si no ha iniciado, mostrar convocatoria
+      }
 
       if (!eventoData.equipoId) {
         setError('El evento no tiene un equipo asignado.');
@@ -132,6 +158,32 @@ function DetalleEvento() {
         setSuplentes(convocadosData);
         setTitulares([]);
       }
+      
+      // Sincronizar fase desde Firebase
+      if (eventoData.fase) {
+        setFase(eventoData.fase);
+      }
+      
+      // Cargar evaluaciones si el evento ya fue evaluado
+      if (eventoData.evaluado) {
+        const evaluacionesRef = collection(db, 'clubes', currentUser.clubId, 'eventos', eventoId, 'evaluaciones');
+        const evaluacionesSnap = await getDocs(evaluacionesRef);
+        const evaluacionesData = {};
+        const tiempoEnCampoData = {};
+        
+        evaluacionesSnap.docs.forEach(doc => {
+          const data = doc.data();
+          evaluacionesData[doc.id] = data;
+          // Reconstruir tiempoEnCampo desde los minutos guardados
+          if (data.minutos_jugados) {
+            tiempoEnCampoData[doc.id] = data.minutos_jugados * 60; // Convertir minutos a segundos
+          }
+        });
+        
+        setEvaluaciones(evaluacionesData);
+        setTiempoEnCampo(tiempoEnCampoData);
+      }
+      
     } catch (e) {
       console.error('Error cargando datos del evento:', e);
       setError('No se pudo cargar la información del evento.');
@@ -220,8 +272,30 @@ function DetalleEvento() {
 
 
   // --- Hook para el contador de minutos por jugador ---
+  // MEJORADO: Prevenir que la pantalla se apague con Wake Lock API
+  const wakeLockRef = useRef(null);
+
   useEffect(() => {
-    if (enPausa || fase === 'preparacion' || fase === 'finalizado') return;
+    if (enPausa || fase === 'preparacion' || fase === 'finalizado') {
+      // Liberar Wake Lock cuando esté pausado
+      if (wakeLockRef.current) {
+        wakeLockRef.current.release();
+        wakeLockRef.current = null;
+      }
+      return;
+    }
+
+    // Solicitar Wake Lock para evitar que la pantalla se apague
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLockRef.current = await navigator.wakeLock.request('screen');
+        }
+      } catch (err) {
+        console.warn('⚠️ Wake Lock no disponible:', err);
+      }
+    };
+    requestWakeLock();
 
     const timer = setInterval(() => {
       setSegundosReloj(prev => prev + 1);
@@ -234,7 +308,14 @@ function DetalleEvento() {
       });
     }, 1000);
 
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      // Liberar Wake Lock al limpiar
+      if (wakeLockRef.current) {
+        wakeLockRef.current.release();
+        wakeLockRef.current = null;
+      }
+    };
   }, [enPausa, fase, titulares]);
 
   // --- Funciones de utilidad ---
@@ -246,8 +327,12 @@ function DetalleEvento() {
 
   // --- Funciones de gestión ---
   const moverJugadorConvocatoria = (jugador, aConvocados) => {
-    if (evento?.evaluado) {
-      alert("No se puede modificar la convocatoria de un evento ya evaluado.");
+    if (evento?.evaluado || partidoFinalizado) {
+      alert("❌ No se puede modificar la convocatoria de un evento finalizado.");
+      return;
+    }
+    if (partidoIniciado) {
+      alert("❌ No se puede modificar la convocatoria después de iniciar el partido.");
       return;
     }
     if (aConvocados) {
@@ -260,6 +345,14 @@ function DetalleEvento() {
   };
 
   const guardarConvocatoria = async () => {
+    if (partidoFinalizado) {
+      alert("❌ El partido ya ha finalizado. No se puede modificar la convocatoria.");
+      return;
+    }
+    if (partidoIniciado) {
+      alert("❌ No se puede guardar la convocatoria después de iniciar el partido.");
+      return;
+    }
     const eventoRef = doc(db, 'clubes', currentUser.clubId, 'eventos', eventoId);
     try {
       await updateDoc(eventoRef, {
@@ -352,6 +445,15 @@ function DetalleEvento() {
   };
 
   const guardarAlineacion = async () => {
+    
+    if (partidoFinalizado) {
+      alert("❌ El partido ya ha finalizado. No se puede modificar la alineación.");
+      return;
+    }
+    if (partidoIniciado) {
+      alert("❌ No se puede guardar la alineación después de iniciar el partido.");
+      return;
+    }
     const eventoRef = doc(db, 'clubes', currentUser.clubId, 'eventos', eventoId);
     try {
       await updateDoc(eventoRef, {
@@ -368,8 +470,17 @@ function DetalleEvento() {
   // --- Lógica para "En Vivo" ---
   const minutoActual = Math.floor((segundosAcumulados + segundosReloj) / 60);
 
-  const cambiarFase = (nuevaFase) => {
+  const cambiarFase = async (nuevaFase) => {
     setFase(nuevaFase);
+    
+    // Persistir la fase en Firebase
+    try {
+      const eventoRef = doc(db, 'clubes', currentUser.clubId, 'eventos', eventoId);
+      await updateDoc(eventoRef, { fase: nuevaFase });
+    } catch (err) {
+      console.error("Error al actualizar fase en Firebase:", err);
+    }
+    
     if (nuevaFase === 'descanso' || nuevaFase === 'finalizado') {
       setSegundosAcumulados(prev => prev + segundosReloj);
       setSegundosReloj(0);
@@ -424,8 +535,6 @@ function DetalleEvento() {
       // Si no hay una acción seleccionada, el clic sirve para intercambiar jugadores.
       // Usamos la misma lógica que en la pestaña de alineación.
       quitarTitular(jugador);
-      // La siguiente línea es solo para depuración, puedes eliminarla si quieres.
-      console.log("Jugador seleccionado:", jugador.nombre);
     }
   };
 
@@ -472,10 +581,69 @@ function DetalleEvento() {
   };
 
   const guardarEvaluaciones = async () => {
-    if (Object.keys(evaluaciones).length === 0) {
-      alert("Primero debes ir a la pestaña 'Evaluación' para generar los datos.");
-      return;
+    // Preparar stats si no existen
+    let evaluacionesParaGuardar = evaluaciones;
+    
+    if (Object.keys(evaluacionesParaGuardar).length === 0) {
+      // Generar evaluaciones automáticamente
+      const statsPorJugador = {};
+      convocados.forEach(jugador => {
+        statsPorJugador[jugador.id] = { 
+          goles: 0, 
+          asistencias: 0, 
+          minutos_jugados: 0,
+          momentum: 0,
+        };
+      });
+
+      acciones.forEach(accion => {
+        if (accion.tipo === 'GOL' && statsPorJugador[accion.jugador_id]) {
+          statsPorJugador[accion.jugador_id].goles += 1;
+        }
+        if (accion.tipo === 'ASISTENCIA' && statsPorJugador[accion.jugador_id]) {
+          statsPorJugador[accion.jugador_id].asistencias += 1;
+        }
+      });
+
+      Object.keys(tiempoEnCampo).forEach(jugadorId => {
+        if (statsPorJugador[jugadorId]) {
+          statsPorJugador[jugadorId].minutos_jugados = Math.round(tiempoEnCampo[jugadorId] / 60);
+        }
+      });
+      
+      evaluacionesParaGuardar = statsPorJugador;
+    } else {
+      // Si ya existen evaluaciones, asegurarse de que tienen goles, asistencias y minutos actualizados
+      const statsActualizados = { ...evaluacionesParaGuardar };
+      
+      // Recalcular goles y asistencias desde acciones
+      Object.keys(statsActualizados).forEach(jugadorId => {
+        statsActualizados[jugadorId] = {
+          ...statsActualizados[jugadorId],
+          goles: 0,
+          asistencias: 0,
+        };
+      });
+      
+      acciones.forEach(accion => {
+        if (accion.tipo === 'GOL' && statsActualizados[accion.jugador_id]) {
+          statsActualizados[accion.jugador_id].goles += 1;
+        }
+        if (accion.tipo === 'ASISTENCIA' && statsActualizados[accion.jugador_id]) {
+          statsActualizados[accion.jugador_id].asistencias += 1;
+        }
+      });
+      
+      // Actualizar minutos desde tiempoEnCampo
+      Object.keys(tiempoEnCampo).forEach(jugadorId => {
+        if (statsActualizados[jugadorId]) {
+          statsActualizados[jugadorId].minutos_jugados = Math.round(tiempoEnCampo[jugadorId] / 60);
+        }
+      });
+      
+      evaluacionesParaGuardar = statsActualizados;
     }
+    
     if (!window.confirm("¿Estás seguro de guardar las evaluaciones? Esta acción marcará el partido como finalizado y no se podrá modificar.")) {
       return;
     }
@@ -487,8 +655,8 @@ function DetalleEvento() {
       let sumaPuntuaciones = 0;
       let numEvaluados = 0;
 
-      for (const jugadorId in evaluaciones) {
-        const evaluacionJugador = evaluaciones[jugadorId];
+      for (const jugadorId in evaluacionesParaGuardar) {
+        const evaluacionJugador = evaluacionesParaGuardar[jugadorId];
         const puntuacionBase = 6;
         let puntuacionFinal = puntuacionBase + (evaluacionJugador.momentum || 0);
         puntuacionFinal = Math.max(1, Math.min(10, puntuacionFinal)); // Clamp entre 1 y 10
@@ -509,6 +677,7 @@ function DetalleEvento() {
           goles: evaluacionJugador.goles || 0,
           asistencias: evaluacionJugador.asistencias || 0,
           minutos_jugados: evaluacionJugador.minutos_jugados || 0,
+          momentum: evaluacionJugador.momentum || 0,
         });
 
         const jugadorDocRef = doc(db, 'clubes', currentUser.clubId, 'equipos', evento.equipoId, 'jugadores', jugadorId);
@@ -550,9 +719,69 @@ function DetalleEvento() {
     <div>
       <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Evaluación del Partido</h3>
       {evento.evaluado ? (
-        <div className="text-center p-8 bg-green-50 dark:bg-green-900/20 rounded-lg">
-          <h4 className="font-bold text-green-700 dark:text-green-300">Este evento ya ha sido evaluado.</h4>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Las evaluaciones han sido guardadas y las estadísticas de los jugadores actualizadas.</p>
+        <div className="space-y-6">
+          <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+            <h4 className="font-bold text-green-700 dark:text-green-300">✅ Partido Finalizado</h4>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Las evaluaciones han sido guardadas y las estadísticas actualizadas.</p>
+          </div>
+          
+          {/* Resumen del Marcador */}
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 text-center">
+            <h4 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">Resultado Final</h4>
+            <div className="flex justify-center items-center gap-8">
+              <div className="text-center">
+                <p className="text-sm text-gray-600 dark:text-gray-400">{evento.condicion === 'Local' ? evento.nombre_equipo : evento.rival}</p>
+                <p className="text-5xl font-black text-blue-600 dark:text-blue-400">{marcador.local}</p>
+              </div>
+              <div className="text-3xl font-bold text-gray-400">-</div>
+              <div className="text-center">
+                <p className="text-sm text-gray-600 dark:text-gray-400">{evento.condicion === 'Visitante' ? evento.nombre_equipo : evento.rival}</p>
+                <p className="text-5xl font-black text-red-600 dark:text-red-400">{marcador.visitante}</p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Tabla de Estadísticas Finales */}
+          <div className="border border-black/10 dark:border-black/20 rounded-lg overflow-hidden bg-white/70 dark:bg-gray-800/70">
+            <div className="bg-gradient-to-r from-orange-500/20 via-amber-400/20 to-sky-500/20 px-4 py-3 border-b border-black/10">
+              <h4 className="font-semibold text-gray-800 dark:text-gray-200">Rendimiento de Jugadores</h4>
+            </div>
+            <div className="grid grid-cols-7 text-xs font-bold text-gray-500 dark:text-gray-300 uppercase bg-white/60 dark:bg-gray-700/60 border-b border-black/10">
+              <div className="col-span-2 p-2">Jugador</div>
+              <div className="p-2 text-center">Nota</div>
+              <div className="p-2 text-center">⚽ Goles</div>
+              <div className="p-2 text-center">🅰️ Asist.</div>
+              <div className="p-2 text-center">⏱️ Mins</div>
+              <div className="p-2 text-center">Momentum</div>
+            </div>
+            <div className="max-h-96 overflow-y-auto">
+              {convocados.map(jugador => {
+                const evaluacionJugador = evaluaciones[jugador.id] || {};
+                const momentum = evaluacionJugador.momentum || 0;
+                const puntuacionBase = 6;
+                let puntuacionFinal = puntuacionBase + momentum;
+                puntuacionFinal = Math.max(1, Math.min(10, puntuacionFinal));
+
+                return (
+                  <div key={jugador.id} className="grid grid-cols-7 items-center border-b border-black/5 dark:border-black/20 text-sm hover:bg-gradient-to-r hover:from-orange-500/10 hover:via-amber-400/10 hover:to-sky-500/10 dark:hover:from-orange-500/10 dark:hover:via-amber-400/10 dark:hover:to-sky-500/10 transition-colors">
+                    <div className="col-span-2 p-2 font-medium">
+                      <span className="text-gray-500 mr-2">#{jugador.numero_camiseta}</span>
+                      {jugador.apodo || jugador.nombre}
+                    </div>
+                    <div className={`p-2 text-center font-black text-lg ${puntuacionFinal >= 7 ? 'text-green-600' : puntuacionFinal >= 5 ? 'text-yellow-600' : 'text-red-600'}`}>
+                      {puntuacionFinal.toFixed(1)}
+                    </div>
+                    <div className="p-2 text-center font-semibold">{evaluacionJugador.goles || 0}</div>
+                    <div className="p-2 text-center font-semibold">{evaluacionJugador.asistencias || 0}</div>
+                    <div className="p-2 text-center">{evaluacionJugador.minutos_jugados || 0}'</div>
+                    <div className={`p-2 text-center font-bold ${momentum > 0 ? 'text-green-600' : momentum < 0 ? 'text-red-600' : 'text-gray-400'}`}>
+                      {momentum > 0 ? `+${momentum}` : momentum}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       ) : (
         <div className="space-y-6">
@@ -565,8 +794,8 @@ function DetalleEvento() {
             </p>
             
             {/* --- INICIO: Tabla de Resumen de Evaluaciones --- */}
-            <div className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
-              <div className="grid grid-cols-6 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase bg-gray-100 dark:bg-gray-800">
+            <div className="border border-black/10 dark:border-black/20 rounded-lg overflow-hidden bg-white/70 dark:bg-gray-800/70">
+              <div className="grid grid-cols-6 text-xs font-bold text-gray-500 dark:text-gray-300 uppercase bg-gradient-to-r from-orange-500/20 via-amber-400/20 to-sky-500/20">
                 <div className="col-span-2 p-2">Jugador</div>
                 <div className="p-2 text-center">Momentum</div>
                 <div className="p-2 text-center">Nota Final</div>
@@ -582,7 +811,7 @@ function DetalleEvento() {
                   puntuacionFinal = Math.max(1, Math.min(10, puntuacionFinal));
 
                   return (
-                    <div key={jugador.id} className="grid grid-cols-6 items-center border-t border-gray-200 dark:border-gray-600 text-sm">
+                    <div key={jugador.id} className="grid grid-cols-6 items-center border-t border-black/5 dark:border-black/20 text-sm hover:bg-gradient-to-r hover:from-orange-500/10 hover:via-amber-400/10 hover:to-sky-500/10 dark:hover:from-orange-500/10 dark:hover:via-amber-400/10 dark:hover:to-sky-500/10 transition-colors">
                       <div className="col-span-2 p-2 font-medium">
                         <span className="text-gray-500 mr-2">#{jugador.numero_camiseta}</span>
                         {jugador.apodo || jugador.nombre}
@@ -711,7 +940,7 @@ function DetalleEvento() {
       {/* Columna de Controles y Acciones */}
       <div className="lg:col-span-1 space-y-6">
         {/* Panel de Cronómetro y Fases */}
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md text-center">
+        <div className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-lg shadow-md border border-black/10 text-center">
           <h4 className="font-bold mb-2">Marcador</h4>
           <div className="flex items-center justify-center gap-4">
             <div className="text-center">
@@ -725,7 +954,7 @@ function DetalleEvento() {
             </div>
           </div>
         </div>
-        <div className="bg-gray-100 dark:bg-gray-700/50 p-4 rounded-lg text-center">
+        <div className="bg-gradient-to-br from-orange-500/20 via-amber-400/20 to-sky-500/20 p-4 rounded-lg text-center border border-black/5">
           <Cronometro segundos={segundosReloj} fase={fase} />
           <div className="flex justify-center gap-2 mt-4">
             {fase === 'preparacion' && <button onClick={() => cambiarFase('primer_tiempo')} className="btn-control-vivo bg-green-500"><FaPlay /> Iniciar 1T</button>}
@@ -738,7 +967,7 @@ function DetalleEvento() {
         </div>
 
         {/* Panel de Registro de Acciones */}
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+        <div className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-lg shadow-md border border-black/10">
           <h4 className="font-bold mb-3">Registrar Acción</h4>
           {seleccionandoAccion && (
             <div className="p-3 mb-3 bg-blue-100 dark:bg-blue-900/50 rounded-md text-center">
@@ -758,7 +987,7 @@ function DetalleEvento() {
         </div>
 
         {/* Panel de Suplentes en Vivo */}
-        <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <div className="border border-black/10 dark:border-black/20 rounded-lg p-4 bg-white/70 dark:bg-gray-800/70">
           <h4 className="font-bold mb-2 text-gray-800 dark:text-gray-200">Banquillo ({suplentes.length})</h4>
           <ul className="space-y-2 max-h-48 overflow-y-auto">
             {suplentes.map(j => (
@@ -795,7 +1024,7 @@ function DetalleEvento() {
             onMomentumChange={handleMomentumChange}
           />
         </div>
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+            <div className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-lg shadow-md border border-black/10">
           <h4 className="font-bold mb-3">Feed de Acciones</h4>
           <ul className="space-y-2 max-h-48 overflow-y-auto text-sm">
             {acciones.slice().reverse().map(accion => (
@@ -809,7 +1038,7 @@ function DetalleEvento() {
         </div>
       </div>
       <style>{`
-        .btn-control-vivo { display: inline-flex; align-items: center; gap: 0.5rem; color: white; font-weight: bold; padding: 0.5rem 1rem; border-radius: 0.5rem; }
+        .btn-control-vivo { display: inline-flex; align-items: center; gap: 0.5rem; color: white; font-weight: bold; padding: 0.5rem 1rem; border-radius: 0.5rem; background: linear-gradient(90deg, rgba(249,115,22,0.7), rgba(251,191,36,0.7), rgba(14,165,233,0.7)); border: 1px solid rgba(0,0,0,0.15); }
         .btn-accion { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; background-color: #f3f4f6; border: 1px solid #d1d5db; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; transition: all 0.2s; }
         .dark .btn-accion { background-color: #374151; border-color: #4b5563; }
         .btn-accion:hover { background-color: #e5e7eb; border-color: #9ca3af; }
@@ -839,10 +1068,148 @@ function DetalleEvento() {
     return <div className="text-center p-8 text-gray-500 dark:text-gray-400">Evento no encontrado.</div>;
   }
 
+  // Si es ENTRENAMIENTO, mostrar vista simplificada
+  if (evento.tipo === 'entrenamiento') {
+    return (
+      <div className="space-y-6">
+        {/* Encabezado del Evento */}
+        <div className="bg-gradient-to-br from-orange-500/40 via-amber-400/40 to-sky-500/40 p-6 rounded-lg shadow-md border border-black/10">
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{evento.titulo}</h1>
+              <div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-500 dark:text-gray-400">
+                <span className="font-semibold capitalize">
+                  <strong>Tipo:</strong> ⚽ Entrenamiento
+                </span>
+                <span><strong>Fecha:</strong> {formatearFecha(evento.fecha)}</span>
+                {evento.ubicacion && <span><strong>Ubicación:</strong> {evento.ubicacion}</span>}
+              </div>
+            </div>
+            <Link 
+              to="/eventos" 
+              className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+            >
+              ← Volver
+            </Link>
+          </div>
+        </div>
+
+        {/* Descripción */}
+        {evento.descripcion && (
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">Descripción</h3>
+            <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{evento.descripcion}</p>
+          </div>
+        )}
+
+        {/* Asistencia */}
+        <div className="bg-white/80 dark:bg-gray-800/80 p-6 rounded-lg shadow-md border border-black/10">
+          <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Asistencia</h3>
+          
+          {convocados.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {convocados.map(jugador => (
+                <div 
+                  key={jugador.id} 
+                  className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                >
+                  <span className="text-lg font-bold text-gray-400 dark:text-gray-500">#{jugador.numero_camiseta}</span>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-white">{jugador.nombre} {jugador.apellidos}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{jugador.posicion}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 dark:text-gray-400 text-center py-8">No hay asistentes registrados aún.</p>
+          )}
+          
+          {!evento.evaluado && (
+            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setActiveTab('asistencia')}
+                className="w-full bg-blue-600 text-white py-2.5 rounded-md hover:bg-blue-700 transition-colors font-semibold"
+              >
+                Gestionar Asistencia
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Observaciones */}
+        <div className="bg-white/80 dark:bg-gray-800/80 p-6 rounded-lg shadow-md border border-black/10">
+          <div className="max-w-2xl mx-auto flex flex-col gap-4">
+            <h3 className="text-lg md:text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">Observaciones del Entrenamiento</h3>
+            <textarea
+              value={evento.observaciones || ''}
+              onChange={(e) => {
+                setEvento({ ...evento, observaciones: e.target.value });
+                // setObservacionGuardada(false); // Esta lógica debe estar en el componente que maneja el estado
+              }}
+              placeholder="Escribe aquí tus observaciones sobre el entrenamiento (ejercicios realizados, aspectos a mejorar, etc.)..."
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all min-h-[120px] max-h-60"
+            />
+            <div className="flex items-center gap-4 mt-2">
+              <button
+                className="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                style={{ minWidth: 160 }}
+                disabled={observacionGuardada || loadingObservacion}
+                onClick={async () => {
+                  setLoadingObservacion(true);
+                  try {
+                    const eventoRef = doc(db, 'clubes', currentUser.clubId, 'eventos', eventoId);
+                    await updateDoc(eventoRef, { observaciones: evento.observaciones || '' });
+                    setObservacionGuardada(true);
+                  } catch (error) {
+                    setObservacionGuardada(false);
+                    setErrorObservacion('No se pudo guardar. Intenta de nuevo.');
+                  } finally {
+                    setLoadingObservacion(false);
+                  }
+                }}
+              >
+                {loadingObservacion ? 'Guardando...' : observacionGuardada ? 'Guardado ✓' : 'Guardar observaciones'}
+              </button>
+              {observacionGuardada && (
+                <span className="text-green-600 dark:text-green-400 text-sm font-medium">Guardado correctamente</span>
+              )}
+              {errorObservacion && (
+                <span className="text-red-600 dark:text-red-400 text-sm font-medium">{errorObservacion}</span>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Recuerda guardar tus observaciones antes de salir.</p>
+          </div>
+        </div>
+
+        {/* Modal de Asistencia */}
+        {activeTab === 'asistencia' && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex justify-between items-center">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Gestión de Asistencia</h3>
+                <button
+                  onClick={() => setActiveTab(null)}
+                  className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="p-6">
+                {renderConvocatoria()}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Vista completa para PARTIDOS
   return (
     <div className="space-y-6">
       {/* Encabezado del Evento */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+      <div className="bg-gradient-to-br from-orange-500/40 via-amber-400/40 to-sky-500/40 p-6 rounded-lg shadow-md border border-black/10">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{evento.titulo}</h1>
         <div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-500 dark:text-gray-400">
           <span className="font-semibold capitalize"><strong>Tipo:</strong> {evento.tipo}</span>
@@ -853,18 +1220,62 @@ function DetalleEvento() {
       </div>
 
       {/* Pestañas de Navegación */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md">
+      <div className="bg-white/80 dark:bg-gray-800/80 rounded-lg shadow-md border border-black/10">
         <div className="border-b border-gray-200 dark:border-gray-700">
           <nav className="p-4 flex flex-wrap gap-2" aria-label="Tabs">
-            <TabButton tabName="convocatoria" disabled={evento?.evaluado}>Convocatoria</TabButton>
-            <TabButton tabName="alineacion" disabled={evento?.evaluado}>Alineación</TabButton>
-            <TabButton tabName="envivo">En Vivo</TabButton>
-            <TabButton tabName="evaluacion" onClick={sincronizarStatsParaEvaluacion}>Evaluación</TabButton>
+            {/* Convocatoria: Solo visible si el partido no ha finalizado */}
+            <TabButton 
+              tabName="convocatoria" 
+              disabled={partidoFinalizado || partidoIniciado}
+            >
+              Convocatoria {partidoIniciado && '🔒'}
+            </TabButton>
+            
+            {/* Alineación: Solo visible si el partido no ha finalizado */}
+            <TabButton 
+              tabName="alineacion" 
+              disabled={partidoFinalizado || partidoIniciado}
+            >
+              Alineación {partidoIniciado && '🔒'}
+            </TabButton>
+            
+            {/* En Vivo: Solo visible si el partido NO ha finalizado */}
+            {!partidoFinalizado && (
+              <TabButton tabName="envivo">
+                {partidoIniciado ? '🔴 En Vivo' : '⏱️ Iniciar Partido'}
+              </TabButton>
+            )}
+            
+            {/* Evaluación: Siempre visible, pero destacado si finalizó */}
+            <TabButton 
+              tabName="evaluacion"
+              onClick={sincronizarStatsParaEvaluacion}
+            >
+              {partidoFinalizado ? '✅ Resumen Final' : '📊 Evaluación'}
+            </TabButton>
+            
             <Link to="/eventos" className="ml-auto px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md">
-              Volver
+              ← Volver
             </Link>
           </nav>
         </div>
+
+        {/* Mensaje informativo según estado */}
+        {partidoFinalizado && (
+          <div className="p-4 bg-green-50 dark:bg-green-900/20 border-b border-green-200 dark:border-green-800">
+            <p className="text-sm text-green-800 dark:text-green-300 font-semibold text-center">
+              ✅ Partido finalizado - Solo puedes ver el resumen y estadísticas finales
+            </p>
+          </div>
+        )}
+        
+        {partidoIniciado && !partidoFinalizado && (
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
+            <p className="text-sm text-blue-800 dark:text-blue-300 font-semibold text-center">
+              🔴 Partido en curso - No se pueden modificar convocatoria ni alineación
+            </p>
+          </div>
+        )}
 
         {/* Contenido de las Pestañas */}
         <div className="p-4 md:p-6">

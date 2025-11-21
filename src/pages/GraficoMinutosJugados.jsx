@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebase';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 

@@ -78,6 +78,29 @@ const RegisterForm = () => {
           Para crear un nuevo club, te guiaremos a través de un formulario completo donde podrás registrar los datos de tu club y del administrador.
         </p>
         <button onClick={handleRedirectToRegisterClub} className="w-full bg-green-600 text-white py-3 rounded-md font-semibold hover:bg-green-700 transition-colors duration-300 mt-4">Continuar al Registro del Club</button>
+        
+        {/* Separador */}
+        <div className="relative py-4">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">o</span>
+          </div>
+        </div>
+
+        {/* Opción para invitados */}
+        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+          <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+            ¿Recibiste una invitación de un club?
+          </p>
+          <Link 
+            to="/aceptar-invitacion"
+            className="text-blue-600 dark:text-blue-400 font-bold hover:underline text-sm"
+          >
+            Haz clic aquí para aceptarla →
+          </Link>
+        </div>
       </div>
     </div>
   );

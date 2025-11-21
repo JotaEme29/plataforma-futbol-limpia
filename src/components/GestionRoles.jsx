@@ -137,7 +137,7 @@ function GestionRoles() {
     
     try {
       const invitacionesRef = collection(db, 'invitaciones');
-      await addDoc(invitacionesRef, {
+      const docRef = await addDoc(invitacionesRef, {
         ...inviteData,
         clubId: currentUser.clubId,
         clubNombre: currentUser.club?.nombre,
@@ -146,13 +146,20 @@ function GestionRoles() {
         estado: 'pendiente'
       });
 
-      alert('Invitación enviada exitosamente');
+      // Generar link de invitación
+      const inviteLink = `${window.location.origin}/aceptar-invitacion?id=${docRef.id}`;
+      
+      // Copiar al portapapeles
+      await navigator.clipboard.writeText(inviteLink);
+      
+      alert(`✅ ¡Invitación creada exitosamente!\n\n📋 El link ha sido copiado al portapapeles.\n\n🔗 También lo encontrarás en la sección "Invitaciones Pendientes" más abajo.\n\n💡 Ahora solo tienes que enviárselo a ${inviteData.nombre} por WhatsApp, Email o cualquier otro medio.`);
+      
       setInviteData({ email: '', rol: 'entrenador', equipoId: '', nombre: '', apellido: '' });
       setShowInviteForm(false);
       loadData();
     } catch (error) {
       console.error('Error al enviar invitación:', error);
-      alert('Error al enviar la invitación');
+      alert('❌ Error al crear la invitación. Intenta nuevamente.');
     }
   };
 
@@ -207,7 +214,7 @@ function GestionRoles() {
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Usuarios e Invitaciones</h2>
         <button 
           onClick={() => setShowInviteForm(true)}
-          className="flex items-center justify-center gap-2 w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition-colors duration-300"
+          className="flex items-center justify-center gap-2 w-full md:w-auto bg-gradient-to-r from-orange-500/70 via-amber-400/70 to-sky-500/70 hover:from-orange-500 hover:via-amber-400 hover:to-sky-500 text-white font-bold py-2 px-4 rounded-md transition-colors duration-300"
         >
           <FaPlus /> Invitar Usuario
         </button>
@@ -218,7 +225,7 @@ function GestionRoles() {
         <h3 className="text-xl font-semibold mb-4">Tipos de Roles</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {roles.map(role => (
-            <div key={role.value} className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div key={role.value} className="bg-white/60 dark:bg-gray-800/60 p-4 rounded-lg border border-black/10">
               <h4 className="font-bold text-gray-800 dark:text-gray-200">{role.label}</h4>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{role.description}</p>
             </div>
@@ -229,10 +236,10 @@ function GestionRoles() {
       {/* Usuarios Actuales */}
       <div>
         <h3 className="text-xl font-semibold mb-4">Usuarios del Club ({usuarios.length})</h3>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+        <div className="bg-white/70 dark:bg-gray-800/70 rounded-lg shadow-md overflow-hidden border border-black/10">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
+              <thead className="bg-gradient-to-r from-orange-500/20 via-amber-400/20 to-sky-500/20 dark:bg-gradient-to-r dark:from-orange-500/20 dark:via-amber-400/20 dark:to-sky-500/20">
                 <tr>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Usuario</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Rol</th>
@@ -244,7 +251,7 @@ function GestionRoles() {
                 {usuarios.map(usuario => {
                   const roleInfo = getRoleInfo(usuario.rol);
                   return (
-                    <tr key={usuario.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <tr key={usuario.id} className="hover:bg-gradient-to-r hover:from-orange-500/10 hover:via-amber-400/10 hover:to-sky-500/10 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="font-medium text-gray-900 dark:text-white">{usuario.nombre} {usuario.apellido}</div>
                         <div className="text-sm text-gray-500 dark:text-gray-400">{usuario.email}</div>
@@ -267,7 +274,7 @@ function GestionRoles() {
                                 e.target.value = '';
                               }
                             }}
-                            className="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md py-1 px-2 text-sm"
+                        className="bg-white/80 dark:bg-gray-700/80 border border-black/10 dark:border-black/20 rounded-md py-1 px-2 text-sm"
                           >
                             <option value="">Cambiar rol...</option>
                             {roles.map(role => (
@@ -285,7 +292,7 @@ function GestionRoles() {
                             ))}
                           </select>
                         ) : (
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200">Tú</span>
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-500/30 text-amber-900 dark:bg-amber-500/30 dark:text-amber-100">Tú</span>
                         )}
                       </td>
                     </tr>
@@ -301,27 +308,62 @@ function GestionRoles() {
       {invitaciones.length > 0 && (
         <div>
           <h3 className="text-xl font-semibold mb-4">Invitaciones Pendientes ({invitaciones.length})</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             {invitaciones.map(invitacion => {
               const roleInfo = getRoleInfo(invitacion.rol);
+              const inviteLink = `${window.location.origin}/aceptar-invitacion?id=${invitacion.id}`;
+              
               return (
-                <div key={invitacion.id} className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-300 dark:border-yellow-700">
-                  <div className="flex flex-col h-full">
-                    <h4 className="font-bold text-gray-800 dark:text-gray-200">{invitacion.nombre} {invitacion.apellido}</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{invitacion.email}</p>
-                    <p className="text-sm mt-2"><strong>Rol:</strong> {roleInfo.label}</p>
-                    {invitacion.equipoId && (
-                      <p className="text-sm"><strong>Equipo:</strong> {getEquipoNombre(invitacion.equipoId)}</p>
-                    )}
-                    <div className="mt-auto pt-2">
+                <div key={invitacion.id} className="bg-gradient-to-r from-orange-500/10 via-amber-400/10 to-sky-500/10 dark:from-orange-500/10 dark:via-amber-400/10 dark:to-sky-500/10 p-6 rounded-xl border-2 border-amber-400/60 dark:border-amber-500/60 shadow-lg">
+                  <div className="flex flex-col md:flex-row md:items-center gap-4">
+                    {/* Info del invitado */}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full">PENDIENTE</span>
+                        <h4 className="font-bold text-gray-900 dark:text-white text-lg">{invitacion.nombre} {invitacion.apellido}</h4>
+                      </div>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 mb-1">📧 {invitacion.email}</p>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 mb-1">👤 <strong>Rol:</strong> {roleInfo.label}</p>
+                      {invitacion.equipoId && (
+                        <p className="text-sm text-gray-700 dark:text-gray-300">⚽ <strong>Equipo:</strong> {getEquipoNombre(invitacion.equipoId)}</p>
+                      )}
+                    </div>
+
+                    {/* Link de invitación */}
+                    <div className="flex-1 bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-300 dark:border-gray-600">
+                      <p className="text-xs font-bold text-gray-600 dark:text-gray-400 mb-2">🔗 LINK DE INVITACIÓN</p>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={inviteLink}
+                          readOnly
+                          className="flex-1 text-xs px-3 py-2 bg-white/80 dark:bg-gray-700/80 border border-black/10 dark:border-black/20 rounded-md font-mono"
+                        />
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(inviteLink);
+                            alert('✅ Link copiado al portapapeles!\n\nEnvíalo por WhatsApp o Email al invitado.');
+                          }}
+                          className="bg-gradient-to-r from-orange-500/70 via-amber-400/70 to-sky-500/70 hover:from-orange-500 hover:via-amber-400 hover:to-sky-500 text-white font-bold px-4 py-2 rounded-md transition-colors text-sm whitespace-nowrap"
+                        >
+                          📋 Copiar
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        💡 Copia este link y envíaselo al invitado para que cree su cuenta
+                      </p>
+                    </div>
+
+                    {/* Botón cancelar */}
+                    <div>
                       <button 
-                      onClick={() => handleCancelInvitation(invitacion.id)}
-                      className="w-full bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-1 px-2 rounded-md transition-colors"
-                    >
-                      Cancelar
-                    </button>
+                        onClick={() => handleCancelInvitation(invitacion.id)}
+                        className="bg-red-500/80 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-md transition-colors whitespace-nowrap"
+                      >
+                        ❌ Cancelar
+                      </button>
+                    </div>
                   </div>
-                </div>
                 </div>
               );
             })}
@@ -411,7 +453,7 @@ function GestionRoles() {
               >
                 Cancelar
               </button>
-              <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Enviar Invitación</button>
+              <button type="submit" className="bg-gradient-to-r from-orange-500/70 via-amber-400/70 to-sky-500/70 hover:from-orange-500 hover:via-amber-400 hover:to-sky-500 text-white font-bold py-2 px-4 rounded-md transition-colors">Enviar Invitación</button>
             </div>
           </form>
         </div>

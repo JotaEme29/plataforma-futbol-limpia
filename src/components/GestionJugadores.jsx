@@ -1,7 +1,7 @@
 // src/components/GestionJugadores.jsx - GESTIÓN DE JUGADORES PARA PLATAFORMA FÚTBOL 2.0
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebase';
 import {
   collection,

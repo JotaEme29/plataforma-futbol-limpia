@@ -1,6 +1,12 @@
 import React from 'react';
-import { FaEdit, FaTrashAlt, FaFutbol, FaRunning, FaStar, FaHandshake, FaRegCalendarCheck, FaChartLine } from 'react-icons/fa';
-import { motion } from 'framer-motion';
+import {
+  IoPencil,
+  IoTrash,
+  IoFootballOutline,
+  IoWalkOutline,
+  IoStarOutline,
+  IoCalendarOutline,
+} from 'react-icons/io5';
 
 const calcularEdad = (fechaNacimiento) => {
   if (!fechaNacimiento) return '?';
@@ -17,76 +23,106 @@ const calcularEdad = (fechaNacimiento) => {
 const CardJugador = ({ jugador, onEdit, onDelete, onVerGrafico }) => {
   const edad = calcularEdad(jugador.fecha_nacimiento?.toDate());
 
-  // --- ¡NUEVO! ---
-  // Calculamos la valoración media. Si no hay partidos, la valoración es 0.
-  const valoracionMedia = (jugador.partidos_jugados > 0)
-    ? (jugador.suma_valoraciones / jugador.partidos_jugados).toFixed(1)
-    : 'N/A';
+  const valoracionMedia =
+    jugador.partidos_jugados > 0
+      ? (jugador.suma_valoraciones / jugador.partidos_jugados).toFixed(1)
+      : 'N/A';
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:-translate-y-1">
-      <div className="p-4">
+    <div className="group relative overflow-hidden bg-gradient-to-br from-orange-500/40 via-amber-400/40 to-sky-500/40 p-4 lg:p-5 rounded-2xl shadow-xl shadow-black/25 flex flex-col transition-all duration-300 hover:-translate-y-1 border border-black/40">
+      {/* Glow suave similar a CardEvento */}
+      <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_left,white,transparent_60%),radial-gradient(circle_at_bottom_right,white,transparent_60%)] pointer-events-none" />
+
+      <div className="relative z-10 flex-1 flex flex-col gap-2 lg:gap-3">
+        {/* Encabezado jugador */}
         <div className="flex justify-between items-start">
-          <div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate">{jugador.apodo || `${jugador.nombre} ${jugador.apellidos || ''}`}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{jugador.posicion}</p>
+          <div className="flex-1 pr-2">
+            <h3 className="text-base lg:text-lg font-extrabold text-white truncate leading-tight">
+              {jugador.apodo || `${jugador.nombre} ${jugador.apellidos || ''}`}
+            </h3>
+            <p className="text-xs text-black font-semibold flex items-center gap-2">
+              <IoFootballOutline className="text-emerald-600" />
+              {jugador.posicion || 'Sin posicion'}
+            </p>
+            {jugador.fecha_nacimiento && (
+              <p className="mt-0.5 text-xs text-black font-semibold flex items-center gap-2">
+                <IoCalendarOutline className="text-blue-600" />
+                {edad} años
+              </p>
+            )}
           </div>
-          <div className="text-3xl font-black text-gray-300 dark:text-gray-600">
-            {jugador.numero_camiseta || '#'}
-          </div>
-        </div>
-        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{jugador.equipoNombre}</p>
-      </div>
-
-      {/* Estadísticas */}
-      <div className="bg-gray-50 dark:bg-gray-700/50 px-4 py-3 border-t border-b border-gray-200 dark:border-gray-700">
-        <button onClick={() => onVerGrafico(jugador)} className="w-full flex flex-col items-center justify-center text-center mb-3 group hover:scale-105 transition-transform">
-          <div className="relative">
-            <div className="flex items-center justify-center gap-1">
-              <FaStar className="text-amber-400 text-2xl mb-1" />
-              <span className="text-4xl font-black text-amber-500 dark:text-amber-400">{valoracionMedia}</span>
-            </div>
-            <FaChartLine className="absolute -right-5 top-1/2 -translate-y-1/2 text-gray-300 dark:text-gray-600 group-hover:text-amber-500 transition-colors" />
-          </div>
-          <span className="stat-label font-semibold mt-1 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">Valoración Media</span>
-        </button>
-        <div className="grid grid-cols-3 gap-2 text-center border-t border-gray-200 dark:border-gray-600 pt-3">
-          <div className="stat-item">
-            <FaRegCalendarCheck className="stat-icon text-gray-400" />
-            <span className="stat-value">{jugador.partidos_jugados || 0}</span>
-            <span className="stat-label">Partidos</span>
-          </div>
-          <div className="stat-item">
-            <FaRunning className="stat-icon text-gray-400" />
-            <span className="stat-value">{jugador.minutos_jugados || 0}'</span>
-            <span className="stat-label">Minutos</span>
-          </div>
-          <div className="stat-item">
-            <FaFutbol className="stat-icon text-gray-400" />
-            <span className="stat-value">{jugador.total_goles || 0}</span>
-            <span className="stat-label">Goles</span>
+          <div className="flex flex-col items-center rounded-lg px-2.5 py-1 bg-black/20 border border-white/20">
+            <span className="text-xs text-white uppercase tracking-wide">
+              N°
+            </span>
+            <span className="text-lg sm:text-xl font-extrabold text-white leading-none">
+              {jugador.numero_camiseta || '#'}
+            </span>
           </div>
         </div>
+
+        {/* Valoracion media destacada */}
+        <button
+          onClick={() => onVerGrafico(jugador)}
+          className="w-full flex flex-col items-center justify-center text-center p-2 lg:p-3 rounded-xl bg-white/20 border border-black/15 hover:bg-white/30 transition-colors duration-200"
+        >
+          <div className="flex items-center justify-center gap-2">
+            <IoStarOutline className="text-amber-500 text-xl lg:text-2xl" />
+            <span className="text-xl lg:text-2xl font-extrabold text-white leading-tight">
+              {valoracionMedia}
+            </span>
+          </div>
+          <span className="text-[11px] lg:text-xs font-bold text-black mt-1 uppercase tracking-wide">
+            Valoracion media
+          </span>
+        </button>
+
+        {/* Estadisticas rapidas */}
+        <div className="grid grid-cols-3 gap-1.5 lg:gap-2">
+          <StatItem value={jugador.partidos_jugados || 0} label="Partidos" />
+          <StatItem value={`${jugador.minutos_jugados || 0}'`} label="Minutos" />
+          <StatItem value={jugador.total_goles || 0} label="Goles" />
+        </div>
       </div>
 
-      {/* Acciones */}
-      <div className="p-3 flex justify-end gap-2 bg-gray-50 dark:bg-gray-800">
-        <button onClick={() => onEdit(jugador)} className="btn-card-action text-blue-600 hover:bg-blue-100 dark:hover:bg-gray-700">
-          <FaEdit />
+      {/* Acciones inferiores, alineadas con estilo de CardEvento */}
+      <div className="mt-3 lg:mt-4 bg-white/5 px-2.5 py-2 lg:px-3 lg:py-2.5 flex justify-end items-center gap-1.5 border-t border-white/10 relative z-10">
+        <button
+          onClick={() => onEdit(jugador)}
+          className="p-1.5 lg:p-2 rounded-lg text-blue-500 hover:bg-blue-100 transition-colors duration-150"
+        >
+          <IoPencil className="text-base lg:text-lg" />
         </button>
-        <button onClick={() => onDelete(jugador.id)} className="btn-card-action text-red-600 hover:bg-red-100 dark:hover:bg-gray-700">
-          <FaTrashAlt />
+        <button
+          onClick={() => onDelete(jugador.id)}
+          className="p-1.5 lg:p-2 rounded-lg text-red-500 hover:bg-red-100 transition-colors duration-150"
+        >
+          <IoTrash className="text-base lg:text-lg" />
         </button>
       </div>
-      <style>{`
-        .stat-item-main { display: flex; flex-direction: column; align-items: center; }
-        .stat-item { display: flex; flex-direction: column; align-items: center; }
-        .stat-icon { font-size: 1.1rem; margin-bottom: 2px; }
-        .stat-value { font-size: 1rem; font-weight: 700; line-height: 1.2; }
-        .stat-label { font-size: 0.65rem; text-transform: uppercase; color: #6b7280; }
-        .dark .stat-label { color: #9ca3af; }
-        .btn-card-action { padding: 0.5rem; border-radius: 50%; transition: background-color 0.2s; }
-      `}</style>
+    </div>
+  );
+};
+
+const StatItem = ({ value, label }) => {
+  let icon = null;
+  if (label === 'Partidos') {
+    icon = <IoCalendarOutline className="text-blue-600 text-base lg:text-lg" />;
+  } else if (label === 'Minutos') {
+    icon = <IoWalkOutline className="text-purple-600 text-base lg:text-lg" />;
+  } else if (label === 'Goles') {
+    icon = <IoFootballOutline className="text-emerald-600 text-base lg:text-lg" />;
+  } else {
+    icon = <span className="text-gray-600 text-base lg:text-lg">?</span>;
+  }
+
+  return (
+    <div className="flex flex-col items-center p-1.5 lg:p-2 rounded-lg bg-white/80 border border-black/10">
+      {icon}
+      <span className="text-sm lg:text-md font-extrabold text-black leading-tight">{value}</span>
+      <span className="text-[10px] lg:text-[11px] text-black uppercase font-bold tracking-wide">
+        {label}
+      </span>
     </div>
   );
 };

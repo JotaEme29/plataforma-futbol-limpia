@@ -1,7 +1,7 @@
 // src/components/ActionLogger.jsx - REGISTRADOR DE ACCIONES EN TIEMPO REAL
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebase';
 import {
   collection,

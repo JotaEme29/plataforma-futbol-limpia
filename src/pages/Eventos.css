@@ -133,7 +133,7 @@
 
 /* Estilo de la tarjeta de evento ultra vibrante */
 .card-evento { 
-  background: linear-gradient(135deg, var(--color-surface) 0%, rgba(59, 130, 246, 0.05) 100%);
+  /* background: linear-gradient(135deg, var(--color-surface) 0%, rgba(59, 130, 246, 0.05) 100%); */
   border-radius: var(--radius-xl);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   border: 3px solid var(--color-border);
@@ -368,7 +368,7 @@
   justify-content: space-between;
   text-decoration: none;
   color: var(--color-text);
-  background: var(--color-surface-2);
+  /* background: var(--color-surface-2); */
   padding: 1.5rem;
   border-radius: var(--radius-m);
   border: 1px solid var(--color-border);

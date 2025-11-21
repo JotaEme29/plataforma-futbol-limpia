@@ -1,7 +1,7 @@
 // src/components/ClubManagement.jsx - GESTIÓN DE CLUBES PARA PLATAFORMA FÚTBOL 2.0
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebase';
 import {
   collection,
@@ -58,6 +58,12 @@ function ClubManagement() {
     { value: 9, label: 'Fútbol 9' },
     { value: 11, label: 'Fútbol 11' }
   ];
+
+  useEffect(() => {
+    if (equipos.length >= 1 && showNewTeamForm) {
+      setShowNewTeamForm(false);
+    }
+  }, [equipos, showNewTeamForm]);
 
   useEffect(() => {
     if (currentUser?.clubId) {
@@ -160,8 +166,8 @@ function ClubManagement() {
   const handleCreateTeam = async (e) => {
     e.preventDefault();
     
-    if (equipos.length >= 12) {
-      alert('Has alcanzado el límite máximo de 12 equipos por club');
+    if (equipos.length >= 1) {
+      alert('En esta prueba solo puedes crear y gestionar un equipo.');
       return;
     }
 

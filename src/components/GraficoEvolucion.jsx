@@ -4,7 +4,16 @@ import { useState, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
 import { db } from '../firebase';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -23,36 +32,43 @@ function GraficoEvolucion({ jugadores = [] }) {
     const cargarDatosEvolucion = async () => {
       if (!jugadorSeleccionado) return;
       setLoading(true);
-      
+
       const q = query(
-        collection(db, "evaluaciones"),
-        where("id_jugador", "==", jugadorSeleccionado),
-        orderBy("fecha_evento", "asc") // Ordenamos del más viejo al más nuevo para la línea de tiempo
+        collection(db, 'evaluaciones'),
+        where('id_jugador', '==', jugadorSeleccionado),
+        orderBy('fecha_evento', 'asc')
       );
 
       const querySnapshot = await getDocs(q);
-      const evaluacionesJugador = querySnapshot.docs.map(doc => doc.data());
+      const evaluacionesJugador = querySnapshot.docs.map((doc) => doc.data());
 
       if (evaluacionesJugador.length > 0) {
-        const labels = evaluacionesJugador.map(e => new Date(e.fecha_evento + 'T00:00:00').toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }));
-        const data = evaluacionesJugador.map(e => {
-          const avg = ((e.tecnica || 0) + (e.fisico || 0) + (e.tactica || 0) + (e.actitud || 0)) / 4;
-          return avg.toFixed(2);
+        const labels = evaluacionesJugador.map((e) =>
+          new Date(e.fecha_evento + 'T00:00:00').toLocaleDateString('es-ES', {
+            month: 'short',
+            day: 'numeric',
+          })
+        );
+        const data = evaluacionesJugador.map((e) => {
+          const avg =
+            ((e.tecnica || 0) + (e.fisico || 0) + (e.tactica || 0) + (e.actitud || 0)) / 4;
+          return Number(avg.toFixed(2));
         });
 
         setDatosGrafico({
           labels,
-          datasets: [{
-            label: 'Valoración Promedio',
-            data,
-            fill: true,
-            backgroundColor: 'rgba(22, 163, 74, 0.2)',
-            borderColor: 'rgba(22, 163, 74, 1)',
-            tension: 0.3,
-          }]
+          datasets: [
+            {
+              label: 'Valoración promedio',
+              data,
+              fill: true,
+              backgroundColor: 'rgba(22, 163, 74, 0.2)',
+              borderColor: 'rgba(22, 163, 74, 1)',
+              tension: 0.3,
+            },
+          ],
         });
       } else {
-        // Si no hay datos, mostramos un gráfico vacío
         setDatosGrafico({ labels: [], datasets: [] });
       }
       setLoading(false);
@@ -67,39 +83,60 @@ function GraficoEvolucion({ jugadores = [] }) {
       legend: { display: false },
       title: {
         display: true,
-        text: 'Evolución de Valoración del Jugador',
+        text: 'Evolución de la valoración del jugador',
         font: { size: 16 },
-        color: '#1a2530',
+        color: '#1f2933',
       },
     },
     scales: {
       y: {
         min: 0,
         max: 10,
-        ticks: { color: '#4a5568' },
-        grid: { color: '#e2e8f0' },
+        ticks: { color: '#4b5563' },
+        grid: { color: '#e5e7eb' },
       },
       x: {
-        ticks: { color: '#4a5568' },
+        ticks: { color: '#4b5563' },
         grid: { display: false },
       },
-    }
+    },
   };
 
   return (
     <>
       {jugadores?.length > 0 ? (
-        <select value={jugadorSeleccionado} onChange={(e) => setJugadorSeleccionado(e.target.value)} className="select-dashboard">
-          {jugadores.map(j => (
-            <option key={j.id} value={j.id}>{j.nombre} {j.apellido}</option>
-          ))}
-        </select>
+        <div className="mb-3">
+          <select
+            value={jugadorSeleccionado}
+            onChange={(e) => setJugadorSeleccionado(e.target.value)}
+            className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {jugadores.map((j) => (
+              <option key={j.id} value={j.id}>
+                {j.nombre} {j.apellidos}
+              </option>
+            ))}
+          </select>
+        </div>
       ) : (
-        <p className="no-data">No hay jugadores disponibles</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">No hay jugadores disponibles</p>
       )}
-      {loading ? <p>Cargando evolución...</p> : <Line options={options} data={datosGrafico} />}
+      <div className="h-64 md:h-80">
+        {loading ? (
+          <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+            Cargando evolución...
+          </div>
+        ) : datosGrafico.labels.length > 0 ? (
+          <Line options={options} data={datosGrafico} />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+            Sin valoraciones registradas para este jugador.
+          </div>
+        )}
+      </div>
     </>
   );
 }
 
 export default GraficoEvolucion;
+

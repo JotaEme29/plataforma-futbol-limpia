@@ -10,6 +10,7 @@ import AppLayout from './components/AppLayout.jsx';
 // Páginas públicas y de autenticación
 import Home from './pages/Home.jsx';
 import RegistroClub from './pages/RegistroClub.jsx'; // Importamos el componente correcto
+import AceptarInvitacion from './pages/AceptarInvitacion.jsx'; // Nueva página para invitados
 
 // Páginas privadas v2.0 (clubes)
 import DashboardClub from './pages/DashboardClub.jsx';
@@ -28,6 +29,7 @@ function App() {
         {/* Ruta de inicio y autenticación */}
         <Route path="/" element={<PublicRoute><Home /></PublicRoute>} />
         <Route path="/registro-club" element={<PublicRoute><RegistroClub /></PublicRoute>} />
+        <Route path="/aceptar-invitacion" element={<PublicRoute><AceptarInvitacion /></PublicRoute>} />
  
         {/* Rutas privadas envueltas con layout */}
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>

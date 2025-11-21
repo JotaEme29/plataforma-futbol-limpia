@@ -15,7 +15,7 @@ import {
   increment
 } from 'firebase/firestore';
 import { db } from '../firebase';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import Cronometro from '../components/Cronometro';
 import CampoDeJuego from '../components/CampoDeJuego';
 import useInterval from '../hooks/useInterval';

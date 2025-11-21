@@ -1,11 +1,29 @@
 /* src/components/EstadisticasAnalisis.css - Modern Stats & Analysis */
 
 .stats-container {
-  background: linear-gradient(135deg, var(--color-surface) 0%, rgba(59, 130, 246, 0.05) 100%);
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.12) 0%, transparent 55%),
+    radial-gradient(circle at bottom right, rgba(34, 197, 94, 0.12) 0%, transparent 55%),
+    linear-gradient(135deg, var(--color-surface) 0%, var(--color-surface-2) 100%);
   border-radius: var(--radius-xl);
   padding: 2rem;
   box-shadow: var(--shadow-lg);
   border: 2px solid var(--color-border);
+}
+
+.stats-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(120deg, rgba(148, 163, 184, 0.2) 1px, transparent 1px),
+    linear-gradient(210deg, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+  background-size: 140px 140px;
+  opacity: 0.25;
+  pointer-events: none;
+  mix-blend-mode: soft-light;
 }
 
 .stats-header {

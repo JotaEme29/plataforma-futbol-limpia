@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, query, where, onSnapshot, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import './Configuracion.css'; // Importamos los nuevos estilos
 
 function Configuracion() {
