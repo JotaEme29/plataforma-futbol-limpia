@@ -23,20 +23,7 @@ import CampoDeJuego from '../components/CampoDeJuego';
 import Cronometro from '../components/Cronometro';
 import EvaluacionRapida from '../components/EvaluacionRapida'; // Importamos el nuevo componente
 import { ordenPosiciones } from '../../config/formaciones';
-import {
-  FaPlay,
-  FaPause,
-  FaStop,
-  FaFlag,
-  FaRedo,
-  FaCheckCircle,
-  FaFutbol,
-  FaBullseye,
-  FaFlagCheckered,
-  FaHandHolding,
-  FaSquareFull,
-  FaExclamationTriangle
-} from 'react-icons/fa';
+import { FaPlay, FaPause, FaStop, FaFlag, FaRedo, FaCheckCircle } from 'react-icons/fa';
 
 const formatTime = (seconds) => {
   if (!seconds || seconds < 0) return "0'";
@@ -73,7 +60,6 @@ function DetalleEvento() {
   const [marcador, setMarcador] = useState({ local: 0, visitante: 0 });
   const [evaluaciones, setEvaluaciones] = useState({}); 
   const [tiempoEnCampo, setTiempoEnCampo] = useState({});
-  const momentumStorageKey = `momentum_${eventoId}`;
 
   // --- Funciones auxiliares para determinar estado del evento ---
   const eventoYaPaso = useMemo(() => {
@@ -98,7 +84,7 @@ function DetalleEvento() {
     <button
       onClick={() => setActiveTab(tabName)}
       disabled={disabled}
-      className={`px-3 md:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed border whitespace-nowrap flex-none ${
+      className={`px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed border ${
         activeTab === tabName
           ? 'bg-gradient-to-r from-orange-500/40 via-amber-400/40 to-sky-500/40 text-white shadow border-black/20'
           : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-transparent'
@@ -210,38 +196,6 @@ function DetalleEvento() {
     cargarDatos();
   }, [cargarDatos]);
 
-  // Restaurar momentum desde sessionStorage
-  useEffect(() => {
-    if (!eventoId) return;
-    const stored = sessionStorage.getItem(momentumStorageKey);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setEvaluaciones(prev => {
-          const merged = { ...prev };
-          Object.entries(parsed || {}).forEach(([jugadorId, momentum]) => {
-            merged[jugadorId] = { ...(merged[jugadorId] || {}), momentum };
-          });
-          return merged;
-        });
-      } catch (_) {
-        // ignore parse errors
-      }
-    }
-  }, [eventoId]);
-
-  // Guardar momentum en sessionStorage para que no se pierda al cambiar de pestaña/recargar
-  useEffect(() => {
-    if (!eventoId) return;
-    const toSave = {};
-    Object.entries(evaluaciones).forEach(([jugadorId, evalData]) => {
-      if (evalData && typeof evalData.momentum === 'number') {
-        toSave[jugadorId] = evalData.momentum;
-      }
-    });
-    sessionStorage.setItem(momentumStorageKey, JSON.stringify(toSave));
-  }, [evaluaciones, eventoId]);
-
   // Sincroniza suplentes con convocados y titulares
   useEffect(() => {
     const idsTitulares = new Set(titulares.map(t => t.id));
@@ -320,7 +274,6 @@ function DetalleEvento() {
   // --- Hook para el contador de minutos por jugador ---
   // MEJORADO: Prevenir que la pantalla se apague con Wake Lock API
   const wakeLockRef = useRef(null);
-  const lastTickRef = useRef(null);
 
   useEffect(() => {
     if (enPausa || fase === 'preparacion' || fase === 'finalizado') {
@@ -339,27 +292,20 @@ function DetalleEvento() {
           wakeLockRef.current = await navigator.wakeLock.request('screen');
         }
       } catch (err) {
-        console.warn('⚠️Å Wake Lock no disponible:', err);
+        console.warn('⚠️ Wake Lock no disponible:', err);
       }
     };
     requestWakeLock();
 
-    lastTickRef.current = Date.now();
-
     const timer = setInterval(() => {
-      const now = Date.now();
-      const delta = Math.max(0, Math.floor((now - lastTickRef.current) / 1000));
-      if (delta > 0) {
-        lastTickRef.current = now;
-        setSegundosReloj(prev => prev + delta);
-        setTiempoEnCampo(prev => {
-          const nuevoTiempo = { ...prev };
-          titulares.forEach(jugador => {
-            nuevoTiempo[jugador.id] = (nuevoTiempo[jugador.id] || 0) + delta;
-          });
-          return nuevoTiempo;
+      setSegundosReloj(prev => prev + 1);
+      setTiempoEnCampo(prev => {
+        const nuevoTiempo = { ...prev };
+        titulares.forEach(jugador => {
+          nuevoTiempo[jugador.id] = (nuevoTiempo[jugador.id] || 0) + 1;
         });
-      }
+        return nuevoTiempo;
+      });
     }, 1000);
 
     return () => {
@@ -758,7 +704,7 @@ function DetalleEvento() {
       });
 
       await batch.commit();
-      alert("¡Evaluaciones y estadásticas guardadas con éxito!");
+      alert("¡Evaluaciones y estadísticas guardadas con éxito!");
       cargarDatos();
       cargarDatos(); // ¡RECARGA DE DATOS!
     } catch (err) {
@@ -776,7 +722,7 @@ function DetalleEvento() {
         <div className="space-y-6">
           <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
             <h4 className="font-bold text-green-700 dark:text-green-300">✅ Partido Finalizado</h4>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Las evaluaciones han sido guardadas y las estadásticas actualizadas.</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Las evaluaciones han sido guardadas y las estadísticas actualizadas.</p>
           </div>
           
           {/* Resumen del Marcador */}
@@ -795,7 +741,7 @@ function DetalleEvento() {
             </div>
           </div>
           
-          {/* Tabla de Estadásticas Finales */}
+          {/* Tabla de Estadísticas Finales */}
           <div className="border border-black/10 dark:border-black/20 rounded-lg overflow-hidden bg-white/70 dark:bg-gray-800/70">
             <div className="bg-gradient-to-r from-orange-500/20 via-amber-400/20 to-sky-500/20 px-4 py-3 border-b border-black/10">
               <h4 className="font-semibold text-gray-800 dark:text-gray-200">Rendimiento de Jugadores</h4>
@@ -804,7 +750,7 @@ function DetalleEvento() {
               <div className="col-span-2 p-2">Jugador</div>
               <div className="p-2 text-center">Nota</div>
               <div className="p-2 text-center">⚽ Goles</div>
-              <div className="p-2 text-center">🤝 Asist.</div>
+              <div className="p-2 text-center">🅰️ Asist.</div>
               <div className="p-2 text-center">⏱️ Mins</div>
               <div className="p-2 text-center">Momentum</div>
             </div>
@@ -843,7 +789,7 @@ function DetalleEvento() {
             <h4 className="font-semibold text-lg mb-2">Confirmar y Guardar Evaluaciones</h4>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
               Las evaluaciones de "momentum" se han realizado en la pestaña "En Vivo".
-              Aquá puedes revisar los datos sincronizados (goles, asistencias, minutos) y, cuando estés listo,
+              Aquí puedes revisar los datos sincronizados (goles, asistencias, minutos) y, cuando estés listo,
               guardar todas las evaluaciones para finalizar el partido.
             </p>
             
@@ -990,221 +936,118 @@ function DetalleEvento() {
   );
 
   const renderEnVivo = () => (
-    <div className="space-y-5">
-      <div className="bg-white/95 dark:bg-slate-900/85 p-3 md:p-4 rounded-2xl shadow-lg border border-slate-200/80 dark:border-slate-700/70">
-        <div className="flex items-center justify-between gap-3 md:gap-4">
-          <div className="flex-1" />
-
-          <div className="flex items-center justify-center gap-3 md:gap-4">
-            <div className="flex flex-col items-center min-w-[68px]">
-              <div className="text-[10px] uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap">Tu equipo</div>
-              <div className="text-xl md:text-2xl font-black leading-tight">
-                {evento.condicion === 'Local' ? marcador.local : marcador.visitante}
-              </div>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Columna de Controles y Acciones */}
+      <div className="lg:col-span-1 space-y-6">
+        {/* Panel de Cronómetro y Fases */}
+        <div className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-lg shadow-md border border-black/10 text-center">
+          <h4 className="font-bold mb-2">Marcador</h4>
+          <div className="flex items-center justify-center gap-4">
+            <div className="text-center">
+              <div className="text-4xl font-black">{evento.condicion === 'Local' ? marcador.local : marcador.visitante}</div>
+              <div className="text-xs font-semibold text-gray-500">TU EQUIPO</div>
             </div>
-            <div className="text-lg md:text-xl font-black text-gray-400">-</div>
-            <div className="flex flex-col items-center min-w-[68px]">
-              <div className="text-[10px] uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap">Rival</div>
-              <div className="text-xl md:text-2xl font-black leading-tight">
-                {evento.condicion === 'Local' ? marcador.visitante : marcador.local}
-              </div>
+            <div className="text-4xl font-bold text-gray-400">-</div>
+            <div className="text-center">
+              <div className="text-4xl font-black">{evento.condicion === 'Local' ? marcador.visitante : marcador.local}</div>
+              <div className="text-xs font-semibold text-gray-500">RIVAL</div>
             </div>
           </div>
-
-          <div className="flex items-center justify-end gap-1.5 md:gap-2 flex-wrap">
-            <div className="flex items-center justify-center px-2 py-0.5 bg-slate-100/80 dark:bg-slate-800/70 rounded-lg border border-slate-200 dark:border-slate-700 shadow-inner scale-75 md:scale-85">
-              <Cronometro
-                segundos={segundosReloj}
-                fase={fase}
-                timeClass="text-lg md:text-xl"
-                phaseClass="text-[10px]"
-              />
-            </div>
-            <div className="flex flex-wrap justify-center gap-1">
-              {fase === 'preparacion' && (
-                <button onClick={() => cambiarFase('primer_tiempo')} className="btn-control-compact play">
-                  <FaPlay /> Iniciar 1T
-                </button>
-              )}
-              {fase === 'primer_tiempo' && (
-                enPausa ? (
-                  <button onClick={() => setEnPausa(false)} className="btn-control-compact play">
-                    <FaPlay /> Reanudar
-                  </button>
-                ) : (
-                  <button onClick={() => setEnPausa(true)} className="btn-control-compact warn">
-                    <FaPause /> Pausar
-                  </button>
-                )
-              )}
-              {fase === 'primer_tiempo' && (
-                <button onClick={() => cambiarFase('descanso')} className="btn-control-compact alt">
-                  <FaFlag /> Descanso
-                </button>
-              )}
-              {fase === 'descanso' && (
-                <button onClick={() => cambiarFase('segundo_tiempo')} className="btn-control-compact play">
-                  <FaPlay /> Iniciar 2T
-                </button>
-              )}
-              {fase === 'segundo_tiempo' && (
-                enPausa ? (
-                  <button onClick={() => setEnPausa(false)} className="btn-control-compact play">
-                    <FaPlay /> Reanudar
-                  </button>
-                ) : (
-                  <button onClick={() => setEnPausa(true)} className="btn-control-compact warn">
-                    <FaPause /> Pausar
-                  </button>
-                )
-              )}
-              {fase === 'segundo_tiempo' && (
-                <button onClick={() => cambiarFase('finalizado')} className="btn-control-compact stop">
-                  <FaStop /> Finalizar
-                </button>
-              )}
-            </div>
+        </div>
+        <div className="bg-gradient-to-br from-orange-500/20 via-amber-400/20 to-sky-500/20 p-4 rounded-lg text-center border border-black/5">
+          <Cronometro segundos={segundosReloj} fase={fase} />
+          <div className="flex justify-center gap-2 mt-4">
+            {fase === 'preparacion' && <button onClick={() => cambiarFase('primer_tiempo')} className="btn-control-vivo bg-green-500"><FaPlay /> Iniciar 1T</button>}
+            {fase === 'primer_tiempo' && (enPausa ? <button onClick={() => setEnPausa(false)} className="btn-control-vivo bg-green-500"><FaPlay /> Reanudar</button> : <button onClick={() => setEnPausa(true)} className="btn-control-vivo bg-yellow-500"><FaPause /> Pausar</button>)}
+            {fase === 'primer_tiempo' && <button onClick={() => cambiarFase('descanso')} className="btn-control-vivo bg-red-500"><FaFlag /> Descanso</button>}
+            {fase === 'descanso' && <button onClick={() => cambiarFase('segundo_tiempo')} className="btn-control-vivo bg-green-500"><FaPlay /> Iniciar 2T</button>}
+            {fase === 'segundo_tiempo' && (enPausa ? <button onClick={() => setEnPausa(false)} className="btn-control-vivo bg-green-500"><FaPlay /> Reanudar</button> : <button onClick={() => setEnPausa(true)} className="btn-control-vivo bg-yellow-500"><FaPause /> Pausar</button>)}
+            {fase === 'segundo_tiempo' && <button onClick={() => cambiarFase('finalizado')} className="btn-control-vivo bg-red-500"><FaStop /> Finalizar</button>}
           </div>
+        </div>
+
+        {/* Panel de Registro de Acciones */}
+        <div className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-lg shadow-md border border-black/10">
+          <h4 className="font-bold mb-3">Registrar Acción</h4>
+          {seleccionandoAccion && (
+            <div className="p-3 mb-3 bg-blue-100 dark:bg-blue-900/50 rounded-md text-center">
+              <p className="font-semibold">Selecciona un jugador para: <strong>{seleccionandoAccion.tipo}</strong></p>
+              <button onClick={() => setSeleccionandoAccion(null)} className="text-xs text-red-500 mt-1">Cancelar</button>
+            </div>
+          )}
+          <div className="grid grid-cols-3 gap-2">
+            <button onClick={() => setSeleccionandoAccion({ tipo: 'GOL' })} className="btn-accion">⚽ Gol</button>
+            <button onClick={() => setSeleccionandoAccion({ tipo: 'TIRO_A_PUERTA' })} className="btn-accion">🎯 A Puerta</button>
+            <button onClick={() => setSeleccionandoAccion({ tipo: 'CORNERS' })} className="btn-accion">📐 Córner</button>
+            <button onClick={() => setSeleccionandoAccion({ tipo: 'ASISTENCIA' })} className="btn-accion">🤝 Asistencia</button>
+            <button onClick={() => setSeleccionandoAccion({ tipo: 'AMARILLA' })} className="btn-accion">🟨 Amarilla</button>
+            <button onClick={() => setSeleccionandoAccion({ tipo: 'ROJA' })} className="btn-accion">🟥 Roja</button>
+            <button onClick={registrarGolEnContra} className="btn-accion col-span-2">🥅 Gol en Contra</button>
+          </div>
+        </div>
+
+        {/* Panel de Suplentes en Vivo */}
+        <div className="border border-black/10 dark:border-black/20 rounded-lg p-4 bg-white/70 dark:bg-gray-800/70">
+          <h4 className="font-bold mb-2 text-gray-800 dark:text-gray-200">Banquillo ({suplentes.length})</h4>
+          <ul className="space-y-2 max-h-48 overflow-y-auto">
+            {suplentes.map(j => (
+              <li key={j.id} className={`flex justify-between items-center p-2 rounded-md transition-colors cursor-pointer ${jugadorParaIntercambio?.id === j.id ? 'bg-blue-200 dark:bg-blue-800' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">#{j.numero_camiseta} {j.nombre}</span>
+                  {tiempoEnCampo[j.id] > 0 && (
+                    <span className="text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 px-1.5 py-0.5 rounded-full">
+                      {formatTime(tiempoEnCampo[j.id])}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <button onClick={() => seleccionarParaIntercambio(j)} className="text-yellow-500 hover:text-yellow-600 text-sm font-semibold">
+                    {jugadorParaIntercambio?.id === j.id ? 'Cancelar' : 'Sustituir'}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 lg:gap-4 items-start">
-        <div className="md:col-span-2 flex flex-col gap-3 order-2 md:order-1">
-          <div className="bg-white/90 dark:bg-gray-800/80 p-3 rounded-lg shadow-sm border border-black/10">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-200">
-                Acciones de partido
-              </h4>
-              {seleccionandoAccion && (
-                <button
-                  className="text-xs text-red-600 hover:underline"
-                  onClick={() => setSeleccionandoAccion(null)}
-                >
-                  Cancelar
-                </button>
-              )}
-            </div>
-            <div className="flex md:grid md:grid-cols-1 xl:grid-cols-3 gap-1 md:gap-2 pt-1 overflow-x-auto md:overflow-visible">
-              <button onClick={() => setSeleccionandoAccion({ tipo: 'GOL' })} className="btn-accion-icono text-slate-900 dark:text-slate-100 shrink-0" aria-label="Gol" title="Gol">
-                <FaFutbol className="icon-svg text-green-600" />
-              </button>
-              <button onClick={() => setSeleccionandoAccion({ tipo: 'ASISTENCIA' })} className="btn-accion-icono text-slate-900 dark:text-slate-100 shrink-0" aria-label="Asistencia" title="Asistencia">
-                <FaHandHolding className="icon-svg text-sky-600" />
-              </button>
-              <button onClick={() => setSeleccionandoAccion({ tipo: 'TIRO_A_PUERTA' })} className="btn-accion-icono text-slate-900 dark:text-slate-100 shrink-0" aria-label="Tiro a puerta" title="Tiro a puerta">
-                <FaBullseye className="icon-svg text-orange-500" />
-              </button>
-              <button onClick={() => setSeleccionandoAccion({ tipo: 'CORNERS' })} className="btn-accion-icono text-slate-900 dark:text-slate-100 shrink-0" aria-label="Corner" title="Corner">
-                <FaFlagCheckered className="icon-svg text-indigo-600" />
-              </button>
-              <button onClick={() => setSeleccionandoAccion({ tipo: 'AMARILLA' })} className="btn-accion-icono text-slate-900 dark:text-slate-100 shrink-0" aria-label="Tarjeta amarilla" title="Tarjeta amarilla">
-                <FaSquareFull className="icon-svg text-yellow-400" />
-              </button>
-              <button onClick={() => setSeleccionandoAccion({ tipo: 'ROJA' })} className="btn-accion-icono text-slate-900 dark:text-slate-100 shrink-0" aria-label="Tarjeta roja" title="Tarjeta roja">
-                <FaSquareFull className="icon-svg text-red-500" />
-              </button>
-              <button onClick={registrarGolEnContra} className="btn-accion-icono text-slate-900 dark:text-slate-100 shrink-0" aria-label="Gol en contra" title="Gol en contra">
-                <FaExclamationTriangle className="icon-svg text-amber-600" />
-              </button>
-            </div>
-          </div>
+      {/* Columna de Campo y Feed */}
+      <div className="lg:col-span-2 space-y-6">
+        <div className="w-full aspect-[3/2] max-w-2xl mx-auto">
+          <CampoDeJuego 
+            titulares={titulares} 
+            formacion={formacion} 
+            onJugadorClick={handleJugadorClickEnVivo} 
+            jugadorSeleccionadoId={jugadorParaIntercambio?.id}
+            tiempoEnCampo={tiempoEnCampo}
+            evaluaciones={evaluaciones}
+            onMomentumChange={handleMomentumChange}
+          />
         </div>
-
-        <div className="md:col-span-7 order-1 md:order-2">
-          <div className="w-full max-w-4xl mx-auto aspect-[3/2]">
-            <CampoDeJuego
-              titulares={titulares}
-              formacion={formacion}
-              onJugadorClick={handleJugadorClickEnVivo}
-              jugadorSeleccionadoId={jugadorParaIntercambio?.id}
-              tiempoEnCampo={tiempoEnCampo}
-              evaluaciones={evaluaciones}
-              onMomentumChange={handleMomentumChange}
-            />
-          </div>
-        </div>
-
-        <div className="md:col-span-3 flex flex-col gap-4 order-3">
-          <div className="border border-black/10 dark:border-black/20 rounded-lg p-3 bg-white/80 dark:bg-gray-800/80">
-            <h4 className="font-bold mb-2 text-gray-800 dark:text-gray-200">Banquillo ({suplentes.length})</h4>
-            <ul className="space-y-2 max-h-64 overflow-y-auto">
-              {suplentes.map(j => (
-                <li
-                  key={j.id}
-                  className={`suplente-card ${jugadorParaIntercambio?.id === j.id ? 'selected' : ''}`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                      {j.numero_camiseta ? `${j.numero_camiseta} ` : ''}{j.nombre}
-                    </span>
-                    {tiempoEnCampo[j.id] > 0 && (
-                      <span className="chip-tiempo">{formatTime(tiempoEnCampo[j.id])}</span>
-                    )}
-                  </div>
-                  <button onClick={() => seleccionarParaIntercambio(j)} className="icono-sustituir">
-                    {jugadorParaIntercambio?.id === j.id ? 'Cancelar' : 'Sustituir'}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="bg-white/90 dark:bg-gray-800/80 p-3 rounded-lg shadow-sm border border-black/10">
-            <h4 className="font-bold mb-3 text-gray-800 dark:text-gray-200 text-sm uppercase">Feed de acciones</h4>
-            <ul className="space-y-2 max-h-72 overflow-y-auto text-sm">
-              {acciones.slice().reverse().map(accion => (
-                <li key={accion.id} className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-700/40 rounded-md border border-gray-200/70 dark:border-gray-700/60">
-                  <span className="font-bold text-gray-700 dark:text-gray-100">{accion.minuto}'</span>
-                  <span className="text-gray-800 dark:text-gray-200">{accion.tipo} - {accion.jugador_nombre}</span>
-                </li>
-              ))}
-              {acciones.length === 0 && <p className="text-gray-500 text-center">Sin acciones registradas.</p>}
-            </ul>
-          </div>
+            <div className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-lg shadow-md border border-black/10">
+          <h4 className="font-bold mb-3">Feed de Acciones</h4>
+          <ul className="space-y-2 max-h-48 overflow-y-auto text-sm">
+            {acciones.slice().reverse().map(accion => (
+              <li key={accion.id} className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-700/50 rounded-md">
+                <span className="font-bold">{accion.minuto}'</span>
+                <span>{accion.tipo} - {accion.jugador_nombre}</span>
+              </li>
+            ))}
+            {acciones.length === 0 && <p className="text-gray-500 text-center">No hay acciones registradas.</p>}
+          </ul>
         </div>
       </div>
       <style>{`
-        .btn-control-compact { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.65rem; border-radius: 0.6rem; font-weight: 700; font-size: 0.86rem; border: 1px solid rgba(0,0,0,0.08); background: linear-gradient(120deg, #f8fafc, #e2e8f0); color: #0f172a; }
-        .btn-control-compact.play { background: #22c55e; color: #fff; border-color: #16a34a; }
-        .btn-control-compact.warn { background: #fbbf24; color: #1f2937; border-color: #f59e0b; }
-        .btn-control-compact.alt { background: #38bdf8; color: #0f172a; border-color: #0ea5e9; }
-        .btn-control-compact.stop { background: #ef4444; color: #fff; border-color: #dc2626; }
-        .btn-control-compact:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(15,23,42,0.15); }
-
-        .btn-accion-icono { display: inline-flex; align-items: center; justify-content: center; width: auto; min-height: 28px; padding: 0.28rem 0.35rem; border-radius: 11px; border: 1px solid #e2e8f0; background: linear-gradient(160deg, #ffffff, #f8fafc); box-shadow: 0 3px 8px rgba(15,23,42,0.08); transition: all 0.2s ease; color: #0f172a; }
-        .btn-accion-icono:hover { transform: translateY(-1px) scale(1.02); border-color: #cbd5e1; box-shadow: 0 8px 16px rgba(15,23,42,0.12); }
-        .btn-accion-icono:active { transform: translateY(0); box-shadow: 0 4px 12px rgba(15,23,42,0.12); }
-        .btn-accion-icono .icon-svg { width: 12px; height: 12px; display: block; flex-shrink: 0; }
-        @media (min-width: 768px) {
-          .btn-accion-icono { width: 100%; min-height: 38px; padding: 0.4rem 0.5rem; }
-          .btn-accion-icono .icon-svg { width: 16px; height: 16px; }
-        }
-        .dark .btn-accion-icono { background: linear-gradient(160deg, #111827, #1f2937); border-color: #334155; box-shadow: 0 6px 18px rgba(0,0,0,0.35); }
-        .dark .btn-accion-icono:hover { border-color: #475569; box-shadow: 0 12px 22px rgba(0,0,0,0.45); }
-
-        .suplente-card { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.65rem; border-radius: 0.6rem; border: 1px solid #e2e8f0; background: #f8fafc; }
-        .suplente-card.selected { border-color: #38bdf8; background: #e0f2fe; }
-        .dark .suplente-card { background: #1f2937; border-color: #334155; }
-        .dark .suplente-card.selected { background: #0ea5e9; border-color: #0284c7; color: #0b1220; }
-
-        .chip-tiempo { font-size: 10px; font-weight: 700; background: #e2e8f0; color: #475569; padding: 1px 6px; border-radius: 999px; }
-        .dark .chip-tiempo { background: #334155; color: #cbd5e1; }
-
-        .icono-sustituir { font-size: 11px; font-weight: 700; color: #0ea5e9; padding: 4px 8px; border-radius: 0.5rem; border: 1px solid #cbd5e1; background: #fff; }
-        .icono-sustituir:hover { background: #e0f2fe; border-color: #38bdf8; }
-        .dark .icono-sustituir { background: #0f172a; border-color: #334155; color: #7dd3fc; }
-        .dark .icono-sustituir:hover { background: #0ea5e9; color: #0b1220; }
-
-        @media (max-width: 900px) {
-          .suplente-card { padding: 0.45rem 0.6rem; }
-          .suplente-card span { font-size: 0.85rem; }
-          .icono-sustituir { font-size: 10px; padding: 3.5px 7px; }
-        }
+        .btn-control-vivo { display: inline-flex; align-items: center; gap: 0.5rem; color: white; font-weight: bold; padding: 0.5rem 1rem; border-radius: 0.5rem; background: linear-gradient(90deg, rgba(249,115,22,0.7), rgba(251,191,36,0.7), rgba(14,165,233,0.7)); border: 1px solid rgba(0,0,0,0.15); }
+        .btn-accion { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; background-color: #f3f4f6; border: 1px solid #d1d5db; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; transition: all 0.2s; }
+        .dark .btn-accion { background-color: #374151; border-color: #4b5563; }
+        .btn-accion:hover { background-color: #e5e7eb; border-color: #9ca3af; }
+        .dark .btn-accion:hover { background-color: #4b5563; border-color: #6b7280; }
       `}</style>
     </div>
   );
 
-// --- Renderizado Principal ---
+  // --- Renderizado Principal ---
   if (loading) {
     return <div className="text-center p-8 text-gray-500 dark:text-gray-400">Cargando evento...</div>;
   }
@@ -1228,11 +1071,7 @@ function DetalleEvento() {
   // Si es ENTRENAMIENTO, mostrar vista simplificada
   if (evento.tipo === 'entrenamiento') {
     return (
-      <div className="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-amber-50 dark:from-slate-950 dark:via-slate-900 dark:to-black overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,#e2e8f0_1px,transparent_0)] bg-[size:26px_26px] opacity-40 dark:bg-[radial-gradient(circle_at_1px_1px,#0f172a_1px,transparent_0)]"></div>
-        <div className="pointer-events-none absolute -top-40 -left-32 w-80 h-80 bg-orange-400/15 blur-3xl rounded-full"></div>
-        <div className="pointer-events-none absolute -bottom-48 -right-32 w-96 h-96 bg-sky-400/15 blur-3xl rounded-full"></div>
-        <div className="relative z-10 space-y-6">
+      <div className="space-y-6">
         {/* Encabezado del Evento */}
         <div className="bg-gradient-to-br from-orange-500/40 via-amber-400/40 to-sky-500/40 p-6 rounded-lg shadow-md border border-black/10">
           <div className="flex items-start justify-between">
@@ -1308,7 +1147,7 @@ function DetalleEvento() {
                 setEvento({ ...evento, observaciones: e.target.value });
                 // setObservacionGuardada(false); // Esta lógica debe estar en el componente que maneja el estado
               }}
-              placeholder="Escribe aquá tus observaciones sobre el entrenamiento (ejercicios realizados, aspectos a mejorar, etc.)..."
+              placeholder="Escribe aquí tus observaciones sobre el entrenamiento (ejercicios realizados, aspectos a mejorar, etc.)..."
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all min-h-[120px] max-h-60"
             />
             <div className="flex items-center gap-4 mt-2">
@@ -1362,18 +1201,13 @@ function DetalleEvento() {
             </div>
           </div>
         )}
-        </div>
       </div>
     );
   }
 
   // Vista completa para PARTIDOS
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-amber-50 dark:from-slate-950 dark:via-slate-900 dark:to-black overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,#e2e8f0_1px,transparent_0)] bg-[size:26px_26px] opacity-40 dark:bg-[radial-gradient(circle_at_1px_1px,#0f172a_1px,transparent_0)]"></div>
-      <div className="pointer-events-none absolute -top-40 -left-32 w-80 h-80 bg-orange-400/15 blur-3xl rounded-full"></div>
-      <div className="pointer-events-none absolute -bottom-48 -right-32 w-96 h-96 bg-sky-400/15 blur-3xl rounded-full"></div>
-      <div className="relative z-10 space-y-6">
+    <div className="space-y-6">
       {/* Encabezado del Evento */}
       <div className="bg-gradient-to-br from-orange-500/40 via-amber-400/40 to-sky-500/40 p-6 rounded-lg shadow-md border border-black/10">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{evento.titulo}</h1>
@@ -1388,7 +1222,7 @@ function DetalleEvento() {
       {/* Pestañas de Navegación */}
       <div className="bg-white/80 dark:bg-gray-800/80 rounded-lg shadow-md border border-black/10">
         <div className="border-b border-gray-200 dark:border-gray-700">
-          <nav className="p-4 flex flex-nowrap md:flex-wrap items-center gap-2 w-full overflow-x-auto md:overflow-visible min-w-full" aria-label="Tabs">
+          <nav className="p-4 flex flex-wrap gap-2" aria-label="Tabs">
             {/* Convocatoria: Solo visible si el partido no ha finalizado */}
             <TabButton 
               tabName="convocatoria" 
@@ -1420,7 +1254,7 @@ function DetalleEvento() {
               {partidoFinalizado ? '✅ Resumen Final' : '📊 Evaluación'}
             </TabButton>
             
-            <Link to="/eventos" className="ml-auto px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md whitespace-nowrap flex-none">
+            <Link to="/eventos" className="ml-auto px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md">
               ← Volver
             </Link>
           </nav>
@@ -1430,7 +1264,7 @@ function DetalleEvento() {
         {partidoFinalizado && (
           <div className="p-4 bg-green-50 dark:bg-green-900/20 border-b border-green-200 dark:border-green-800">
             <p className="text-sm text-green-800 dark:text-green-300 font-semibold text-center">
-              ✅ Partido finalizado - Solo puedes ver el resumen y estadásticas finales
+              ✅ Partido finalizado - Solo puedes ver el resumen y estadísticas finales
             </p>
           </div>
         )}
@@ -1451,7 +1285,6 @@ function DetalleEvento() {
           {activeTab === 'evaluacion' && renderEvaluacion()}
         </div>
       </div>
-    </div>
     </div>
   );
 }

@@ -6,7 +6,7 @@ const formatTime = (totalSeconds) => {
   return `${minutes}:${seconds}`;
 };
 
-const Cronometro = ({ segundos, fase }) => {
+const Cronometro = ({ segundos, fase, className = '', timeClass = '', phaseClass = '' }) => {
   const getFaseTexto = () => {
     switch (fase) {
       case 'preparacion': return 'Preparación';
@@ -19,11 +19,11 @@ const Cronometro = ({ segundos, fase }) => {
   };
 
   return (
-    <div className="text-center">
-      <div className="text-6xl font-black text-gray-900 dark:text-white tracking-widest tabular-nums">
+    <div className={`text-center ${className}`}>
+      <div className={`text-4xl md:text-5xl font-black text-gray-900 dark:text-white tracking-widest tabular-nums ${timeClass}`}>
         {formatTime(segundos)}
       </div>
-      <div className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1">
+      <div className={`text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1 ${phaseClass}`}>
         {getFaseTexto()}
       </div>
     </div>
