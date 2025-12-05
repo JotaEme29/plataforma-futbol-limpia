@@ -58,13 +58,13 @@ const Navbar = () => {
             </motion.div>
 
             {/* Navigation links */}
-            <div className="hidden md:flex items-center space-x-1.5">
+            <div className="hidden lg:flex items-center space-x-1.5">
               {navItems.map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}
                   className={({ isActive }) =>
-                    `relative px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all duration-200 ${
+                    `relative px-3 py-2 rounded-lg text-xs lg:text-sm font-semibold transition-all duration-200 ${
                       isActive
                         ? 'text-white'
                         : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -90,7 +90,7 @@ const Navbar = () => {
 
           {/* Right side actions */}
           <div className="flex items-center gap-2.5">
-            <span className="text-gray-600 dark:text-gray-400 text-xs md:text-sm font-medium mr-1 hidden sm:block">
+            <span className="text-gray-600 dark:text-gray-400 text-xs lg:text-sm font-medium mr-1 hidden lg:block">
               {currentUser?.email}
             </span>
 
@@ -110,7 +110,7 @@ const Navbar = () => {
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={handleLogout}
-              className="hidden md:block px-3 py-2 rounded-lg text-xs md:text-sm font-semibold text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 transition-colors duration-200 shadow-sm"
+              className="hidden lg:block px-3 py-2 rounded-lg text-xs lg:text-sm font-semibold text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 transition-colors duration-200 shadow-sm"
               aria-label="Cerrar sesión"
             >
               <FaSignOutAlt className="text-sm" />
@@ -120,7 +120,7 @@ const Navbar = () => {
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2.5 rounded-lg text-gray-600 dark:text-gray-400 bg-gray-100/80 dark:bg-gray-800/80 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+              className="lg:hidden p-2.5 rounded-lg text-gray-600 dark:text-gray-400 bg-gray-100/80 dark:bg-gray-800/80 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
               aria-label="Menu"
             >
               {mobileMenuOpen ? <FaTimes className="text-xl" /> : <FaBars className="text-xl" />}
@@ -135,7 +135,7 @@ const Navbar = () => {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="md:hidden border-t border-gray-200/60 dark:border-gray-700/60 overflow-hidden bg-white/80 dark:bg-gray-900/90 backdrop-blur-md"
+              className="lg:hidden border-t border-gray-200/60 dark:border-gray-700/60 overflow-hidden bg-white/80 dark:bg-gray-900/90 backdrop-blur-md"
             >
               <div className="px-2 pt-2 pb-3 space-y-1">
                 {navItems.map((item) => (

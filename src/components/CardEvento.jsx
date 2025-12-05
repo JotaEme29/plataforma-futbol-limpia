@@ -150,18 +150,18 @@ const CardEvento = ({ evento, onEdit, onDelete }) => {
         <div className="flex items-center gap-1.5">
           <button
             onClick={handleEditClick}
-            className="p-2 rounded-lg text-white hover:bg-white/15 transition-colors duration-150"
+            className="p-2 rounded-lg text-blue-500 hover:bg-blue-100 transition-colors duration-150"
           >
-            <IoPencil />
+            <IoPencil className="text-lg" />
           </button>
           <button
             onClick={handleDeleteClick}
-            className="p-2 rounded-lg text-white hover:bg-white/15 transition-colors duration-150"
+            className="p-2 rounded-lg text-red-500 hover:bg-red-100 transition-colors duration-150"
           >
-            <IoTrash />
+            <IoTrash className="text-lg" />
           </button>
-          <span className="text-xs font-semibold text-white group-hover:underline flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg border border-white/20">
-            <IoEye />
+          <span className="p-2 rounded-lg text-emerald-600 bg-white/80 border border-black/10 flex items-center gap-2 font-semibold text-xs hover:bg-emerald-50 transition-colors duration-150">
+            <IoEye className="text-lg" />
             <span>Ver</span>
           </span>
         </div>

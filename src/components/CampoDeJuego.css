@@ -1,190 +1,296 @@
-/* src/components/CampoDeJuego.css */
+/* ============================================= */
+/* == Estilos modernizados para Jugador en Campo == */
+/* ============================================= */
 
-/* Contenedor principal para posicionamiento absoluto */
-.player-card-container {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  transition: all 0.3s ease-out;
-  z-index: 10; /* ¡IMPORTANTE! Asegura que la tarjeta esté sobre las líneas del campo */
-  min-width: 0;
-}
-
-/* Etiqueta de tiempo jugado */
-.tiempo-jugado {
-  position: absolute;
-  top: -0.9rem; /* Ajusta para que quede encima de la tarjeta */
-  z-index: 11; /* Debe estar por encima de la tarjeta */
-  background-color: rgba(0, 0, 0, 0.75);
-  color: white;
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 2px 5px;
-  border-radius: 4px;
-}
-
-/* Tarjeta del jugador */
 .player-card {
+  --card-w: clamp(58px, 7vw, 82px);
+  --card-h: clamp(52px, 7vw, 74px);
+  --card-gap: clamp(1px, 0.5vw, 3px);
+  --card-padding: clamp(2px, 0.6vw, 4px);
+  --control-height: clamp(16px, 2vw, 18px);
+  --control-font: clamp(0.55rem, 1vw, 0.7rem);
+  --chip-font: clamp(0.4rem, 0.75vw, 0.5rem);
+  --circle-size: clamp(17px, 2vw, 21px);
+  --circle-font: clamp(0.52rem, 1.2vw, 0.68rem);
+  --name-font: clamp(0.58rem, 1.4vw, 0.72rem);
+  --pos-font: clamp(0.36rem, 0.85vw, 0.42rem);
+  --momentum-font: clamp(0.6rem, 1.2vw, 0.78rem);
+  --momentum-gap: clamp(1px, 0.4vw, 2px);
+  --momentum-padding: clamp(1px, 0.4vw, 2.5px);
+  --control-gap: clamp(1px, 0.4vw, 3px);
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 0.08rem; /* más compacto */
-  width: 32px; /* más pequeño para evitar scroll */
-  padding: 0.05rem; /* más compacto */
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(8px) saturate(1.2);
-  border: 1px solid transparent;
-  border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  transition: all 0.25s ease-out;
+  gap: var(--card-gap);
+  width: var(--card-w);
+  height: var(--card-h);
+  padding: var(--card-padding);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(241, 245, 249, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 9px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(4px);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
   cursor: pointer;
-  overflow: hidden;
 }
 
-.player-card.selected {
-  border-color: #3b82f6; /* blue-500 */
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25), 0 4px 12px rgba(0, 0, 0, 0.15);
+.dark .player-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.88), rgba(51, 65, 85, 0.9));
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.24);
 }
 
 .player-card:hover {
-  transform: translateY(-2px) scale(1.03);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px) scale(1.005);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
 }
 
-/* Info del jugador (número y nombre) */
-.player-card-info {
+.player-card.selected {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.35), 0 12px 24px rgba(0, 0, 0, 0.2);
+}
+
+.player-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.jersey-circle {
+  width: var(--circle-size);
+  height: var(--circle-size);
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f97316, #ef4444);
+  color: #fff;
+  font-weight: 800;
+  font-size: var(--circle-font);
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 5px 10px rgba(239, 68, 68, 0.28);
+}
+
+.dark .jersey-circle {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.player-card-headings {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 1px;
-  width: 100%;
-}
-
-.player-card-number {
-  font-size: 0.6rem; /* 12px */
-  color: #4b5563; /* gray-600 */
-  font-weight: 700;
+  gap: clamp(1px, 0.6vw, 2px);
+  align-items: flex-start;
 }
 
 .player-card-name {
-  font-size: 0.6rem; /* 12px (reducido para móvil) */
-  color: #1f2937; /* gray-800 */
-  font-weight: 600;
+  font-size: var(--name-font);
+  font-weight: 700;
+  color: #0f172a;
+  max-width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 100%;
+  line-height: 1.05;
+  display: block;
 }
 
-/* Controles de momentum (+/-) */
-.player-card-controls {
+.player-card-subline {
   display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 0.25rem; /* 4px */
-  width: 100%;
-  margin-top: 0.25rem;
-}
-
-.eval-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  font-size: 1.1rem; /* Tamaño base de íconos */
-  line-height: 1;
-  transition: transform 0.15s, color 0.2s;
-}
-
-.eval-btn:hover { transform: scale(1.1); }
-.eval-btn.plus { color: #16a34a; } /* green-600 */
-.eval-btn.minus { color: #dc2626; } /* red-600 */
-.eval-btn.plus:hover { color: #15803d; } /* green-700 */
-.eval-btn.minus:hover { color: #b91c1c; } /* red-700 */
-
-.momentum-display {
-  font-size: 0.8rem; /* 13px */
-  font-weight: 700;
-  min-width: 28px;
-  text-align: center;
-  color: #1f2937; /* gray-800 */
-}
-
-.momentum-positive { color: #16a34a; } /* green-600 */
-.momentum-negative { color: #dc2626; } /* red-600 */
-.momentum-neutral { color: #6b7280; } /* gray-500 */
-
-/* --- Dark Mode --- */
-.dark .player-card {
-  background: rgba(31, 41, 55, 0.6); /* gray-800 con más opacidad */
-}
-
-.dark .player-card.selected {
-  border-color: #60a5fa; /* blue-400 */
-  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.25);
-}
-
-.dark .player-card-number {
-  color: #9ca3af; /* gray-400 */
+  gap: 4px;
+  min-width: 0;
 }
 
 .dark .player-card-name {
-  color: #f3f4f6; /* gray-100 */
+  color: #e2e8f0;
+}
+
+.player-card-position {
+  font-size: var(--pos-font);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #475569;
+  padding: 0;
+  border-radius: 0;
+  border: none;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  line-height: 1.05;
+  max-width: 100%;
+}
+
+.dark .player-card-position {
+  color: #cbd5e1;
+}
+
+.player-card-number-inline {
+  font-size: var(--pos-font);
+  font-weight: 800;
+  color: #111827;
+  white-space: nowrap;
+}
+
+.dark .player-card-number-inline {
+  color: #e5e7eb;
+}
+
+.player-card-controls {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(4px, 1vw, 6px);
+  align-items: stretch;
+  min-width: 0;
+}
+
+.eval-btn {
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #0f172a;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--control-font);
+  height: var(--control-height);
+  min-width: 0;
+  transition: transform 0.1s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.eval-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 14px rgba(0, 0, 0, 0.14);
+}
+
+.eval-btn:active {
+  transform: scale(0.96);
+}
+
+.eval-btn.plus {
+  color: #16a34a;
+  background: #ecfdf3;
+  border-color: #bbf7d0;
+}
+
+.eval-btn.minus {
+  color: #dc2626;
+  background: #fef2f2;
+  border-color: #fecdd3;
+}
+
+.dark .eval-btn {
+  background: rgba(15, 23, 42, 0.8);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+}
+
+.dark .eval-btn.plus {
+  background: rgba(22, 163, 74, 0.1);
+  border-color: rgba(74, 222, 128, 0.35);
+}
+
+.dark .eval-btn.minus {
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(248, 113, 113, 0.32);
+}
+
+.momentum-display {
+  border-radius: 9px;
+  padding: var(--momentum-padding);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: var(--momentum-gap);
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  min-width: clamp(46px, 9vw, 64px);
+  min-height: 0;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+  flex-shrink: 1;
+  width: 100%;
+}
+
+.momentum-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--control-gap);
+}
+
+.momentum-buttons .eval-btn {
+  width: clamp(24px, 3.2vw, 30px);
+  height: clamp(24px, 3.2vw, 30px);
+  font-size: clamp(0.9rem, 1.8vw, 1rem);
 }
 
 .dark .momentum-display {
-  color: #d1d5db; /* gray-300 */
+  background: rgba(15, 23, 42, 0.8);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
 }
 
-/* --- Responsividad --- */
-@media (min-width: 640px) { /* sm */
-  .player-card {
-    width: 85px;
-    padding: 0.5rem 0.375rem; /* 8px 6px */
-    border-radius: 14px;
-  }
-  .player-card-number {
-    font-size: 0.8rem;
-  }
-  .player-card-name {
-    font-size: 0.875rem; /* 14px */
-  }
-  .eval-btn {
-    font-size: 1.2rem;
-  }
-  .momentum-display {
-    font-size: 0.875rem; /* 14px */
-  }
+.momentum-value {
+  font-size: var(--momentum-font);
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+  min-width: 0;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
-/* Botones de acción mini */
-.btn-accion-mini {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f3f4f6;
-  border: 1px solid #d1d5db;
-  padding: 0.18rem 0.28rem;
-  border-radius: 0.35rem;
-  font-size: 1rem;
-  font-weight: 600;
-  transition: all 0.2s;
-  min-width: 28px;
-  min-height: 28px;
+.dark .momentum-value {
+  color: #e2e8f0;
 }
 
-.dark .btn-accion-mini {
-  background-color: #374151;
-  border-color: #4b5563;
+.momentum-positive {
+  border-color: #bbf7d0;
+  background: linear-gradient(135deg, #ecfdf3, #f0fdf4);
+  color: #15803d;
 }
 
-.btn-accion-mini:hover {
-  background-color: #e5e7eb;
-  border-color: #9ca3af;
+.momentum-negative {
+  border-color: #fecdd3;
+  background: linear-gradient(135deg, #fef2f2, #fff1f2);
+  color: #b91c1c;
 }
 
-.dark .btn-accion-mini:hover {
-  background-color: #4b5563;
-  border-color: #6b7280;
+.momentum-neutral {
+  color: #475569;
+}
+
+.dark .momentum-positive {
+  border-color: rgba(74, 222, 128, 0.4);
+  background: rgba(22, 163, 74, 0.1);
+  color: #4ade80;
+}
+
+.dark .momentum-negative {
+  border-color: rgba(248, 113, 113, 0.35);
+  background: rgba(220, 38, 38, 0.12);
+  color: #fca5a5;
+}
+
+.dark .momentum-neutral {
+  color: #cbd5e1;
+}
+
+.player-minutes-chip {
+  position: absolute;
+  top: -16px;
+  background: linear-gradient(135deg, #0ea5e9, #6366f1);
+  color: #fff;
+  font-size: clamp(0.38rem, 0.72vw, 0.48rem);
+  font-weight: 800;
+  padding: clamp(1.5px, 0.6vw, 2.5px) clamp(4px, 1vw, 6px);
+  border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3);
+  z-index: 20;
+  letter-spacing: 0.04em;
+}
+
+.dark .player-minutes-chip {
+  box-shadow: 0 8px 20px rgba(14, 165, 233, 0.35);
 }
