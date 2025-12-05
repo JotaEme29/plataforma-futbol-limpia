@@ -113,8 +113,8 @@ function DetalleEvento() {
       onClick={() => setActiveTab(tabName)}
       disabled={disabled}
       className={`px-3 md:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed border whitespace-nowrap flex-none ${activeTab === tabName
-          ? 'bg-gradient-to-r from-orange-500/40 via-amber-400/40 to-sky-500/40 text-white shadow border-black/20'
-          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-transparent'
+        ? 'bg-gradient-to-r from-orange-500/40 via-amber-400/40 to-sky-500/40 text-white shadow border-black/20'
+        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-transparent'
         }`}
     >
       {children}
@@ -1012,245 +1012,11 @@ function DetalleEvento() {
     </div>
   );
 
-<<<<<<< HEAD
   const seleccionarParaIntercambio = (jugador) => {
     // Si se vuelve a hacer clic en el mismo jugador, se deselecciona
     setJugadorParaIntercambio(prev => (prev?.id === jugador.id ? null : jugador));
   };
 
-  const MarcadorCronoPanel = ({ isMobileHeader }) => (
-    <div className={`bg-gradient-to-br from-gray-800 via-blue-900 to-gray-700 text-white px-2 py-1 rounded-md shadow border border-black/10 ${isMobileHeader ? 'sticky top-0 z-30' : ''}`}
-      style={{ minHeight: isMobileHeader ? 48 : 60, maxHeight: isMobileHeader ? 60 : 80 }}>
-      <div className="flex flex-row justify-between items-center gap-1">
-        <div className="flex-1 text-center font-semibold text-xs truncate">
-          {evento.condicion === 'Local' ? evento.nombre_equipo : evento.equipoRival}
-        </div>
-        <div className="flex-1 text-center">
-          <span className="text-xl font-extrabold tracking-wide">{marcador.local} <span className="mx-1">-</span> {marcador.visitante}</span>
-        </div>
-        <div className="flex-1 text-center font-semibold text-xs truncate">
-          {evento.condicion === 'Visitante' ? evento.nombre_equipo : evento.equipoRival}
-        </div>
-      </div>
-      <div className="mt-1 flex flex-col items-center gap-1">
-        <Cronometro
-          segundos={segundosReloj}
-          fase={fase}
-        />
-        {/* Botones de control de partido */}
-        <div className="flex flex-wrap gap-2 justify-center mt-2">
-          {fase === 'preparacion' && (
-            <button className="btn-control-vivo" onClick={() => cambiarFase('primer_tiempo')}>Iniciar Partido</button>
-          )}
-          {fase === 'primer_tiempo' && (
-            <>
-              <button className="btn-control-vivo" onClick={() => setEnPausa(!enPausa)}>{enPausa ? 'Reanudar' : 'Pausar'}</button>
-              <button className="btn-control-vivo" onClick={() => cambiarFase('descanso')}>Terminar 1er Tiempo</button>
-            </>
-          )}
-          {fase === 'descanso' && (
-            <button className="btn-control-vivo" onClick={() => cambiarFase('segundo_tiempo')}>Iniciar 2do Tiempo</button>
-          )}
-          {fase === 'segundo_tiempo' && (
-            <>
-              <button className="btn-control-vivo" onClick={() => setEnPausa(!enPausa)}>{enPausa ? 'Reanudar' : 'Pausar'}</button>
-              <button className="btn-control-vivo" onClick={() => cambiarFase('finalizado')}>Finalizar Partido</button>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
-  const AccionesPanel = () => (
-    <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded-lg">
-      <h4 className="font-bold mb-2 text-xs">Acciones Rápidas</h4>
-      <div className="grid grid-cols-3 gap-1">
-        <button onClick={() => setSeleccionandoAccion({ tipo: 'GOL' })} className="btn-accion-mini" title="Gol">
-          <span role="img" aria-label="Gol">⚽</span>
-        </button>
-        <button onClick={() => setSeleccionandoAccion({ tipo: 'ASISTENCIA' })} className="btn-accion-mini" title="Asistencia">
-          <span role="img" aria-label="Asistencia">🅰️</span>
-        </button>
-        <button onClick={() => setSeleccionandoAccion({ tipo: 'TIRO_A_PUERTA' })} className="btn-accion-mini" title="Tiro a Puerta">
-          <span role="img" aria-label="Tiro a Puerta">🎯</span>
-        </button>
-        <button onClick={() => setSeleccionandoAccion({ tipo: 'TARJETA_AMARILLA' })} className="btn-accion-mini" title="Amarilla">
-          <span role="img" aria-label="Amarilla">🟨</span>
-        </button>
-        <button onClick={() => setSeleccionandoAccion({ tipo: 'TARJETA_ROJA' })} className="btn-accion-mini" title="Roja">
-          <span role="img" aria-label="Roja">🟥</span>
-        </button>
-        <button onClick={registrarGolEnContra} className="btn-accion-mini col-span-3" title="Gol Rival">
-          <span role="img" aria-label="Gol Rival">🥅</span>
-        </button>
-      </div>
-    </div>
-  );
-
-  const BanquilloPanel = () => (
-    <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-      <h4 className="font-bold mb-2">Banquillo ({suplentes.length})</h4>
-      <ul className="space-y-2 max-h-48 overflow-y-auto">
-        {suplentes.map(j => (
-          <li key={j.id} className={`flex justify-between items-center p-2 rounded-md transition-colors cursor-pointer ${jugadorParaIntercambio?.id === j.id ? 'bg-blue-200 dark:bg-blue-800' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}>
-            <span className="text-sm"><span className="font-bold w-6 inline-block">{j.numero_camiseta}</span> {j.nombre}</span>
-            <button onClick={() => seleccionarParaIntercambio(j)} className="text-yellow-500 hover:text-yellow-600 text-sm font-semibold">
-              {jugadorParaIntercambio?.id === j.id ? 'Cancelar' : 'Sustituir'}
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-
-  const FeedPanel = () => (
-    <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-      <h4 className="font-bold mb-2">Feed de Acciones</h4>
-      <ul className="space-y-2 max-h-48 overflow-y-auto">
-        {acciones.slice().reverse().map(accion => (
-          <li key={accion.id} className="text-sm">
-            <strong>{accion.minuto}'</strong> - {accion.tipo} - {accion.jugador_nombre}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-
-  // Nueva organización compacta y clara
-  return (
-    <div className="flex flex-col gap-2 w-full">
-      {/* Panel superior reorganizado: fase, tiempo, botones y selector de sistema táctico */}
-      <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-2 bg-gradient-to-br from-gray-800 via-blue-900 to-gray-700 text-white px-2 py-1 rounded-lg shadow border border-black/10 min-h-[34px] max-h-[38px]">
-        {/* Izquierda: Fase, tiempo y botones */}
-        <div className="flex flex-row items-center gap-2 min-w-[120px] w-full sm:w-auto justify-center sm:justify-start">
-          <span className="font-semibold text-xs bg-black/30 px-2 py-0.5 rounded">{fase === 'primer_tiempo' ? '1T' : fase === 'segundo_tiempo' ? '2T' : fase === 'descanso' ? 'Descanso' : fase === 'finalizado' ? 'Finalizado' : 'Preparación'}</span>
-          <span className="font-mono font-bold text-sm bg-black/30 px-2 py-0.5 rounded" style={{ minWidth: '32px', textAlign: 'center' }}>
-            <Cronometro segundos={segundosReloj} fase={fase} style={{ fontSize: '0.9rem', fontWeight: 'bold', lineHeight: '1' }} />
-          </span>
-          {/* Botones de control compactos */}
-          {fase === 'preparacion' && (
-            <button className="btn-control-vivo" style={{ padding: '0.08rem 0.4rem', fontSize: '0.75rem' }} onClick={() => cambiarFase('primer_tiempo')}>Iniciar</button>
-          )}
-          {fase === 'primer_tiempo' && (
-            <>
-              <button className="btn-control-vivo" style={{ padding: '0.08rem 0.4rem', fontSize: '0.75rem' }} onClick={() => setEnPausa(!enPausa)}>{enPausa ? 'Reanudar' : 'Pausar'}</button>
-              <button className="btn-control-vivo" style={{ padding: '0.08rem 0.4rem', fontSize: '0.75rem' }} onClick={() => cambiarFase('descanso')}>Fin 1T</button>
-            </>
-          )}
-          {fase === 'descanso' && (
-            <button className="btn-control-vivo" style={{ padding: '0.08rem 0.4rem', fontSize: '0.75rem' }} onClick={() => cambiarFase('segundo_tiempo')}>Iniciar 2T</button>
-          )}
-          {fase === 'segundo_tiempo' && (
-            <>
-              <button className="btn-control-vivo" style={{ padding: '0.08rem 0.4rem', fontSize: '0.75rem' }} onClick={() => setEnPausa(!enPausa)}>{enPausa ? 'Reanudar' : 'Pausar'}</button>
-              <button className="btn-control-vivo" style={{ padding: '0.08rem 0.4rem', fontSize: '0.75rem' }} onClick={() => cambiarFase('finalizado')}>Finalizar</button>
-            </>
-          )}
-        </div>
-        {/* Selector de sistema táctico: visible y accesible en móvil */}
-        <div className="flex flex-row items-center gap-2 w-full sm:w-auto justify-center sm:justify-end">
-          <label htmlFor="formacion-select" className="text-xs font-semibold">Sistema táctico:</label>
-          <select
-            id="formacion-select"
-            className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-xs font-semibold border border-gray-300 dark:border-gray-700 focus:outline-none z-50 relative !pointer-events-auto !bg-white"
-            value={formacion}
-            onChange={e => {
-              const nuevaFormacion = e.target.value;
-              setFormacion(nuevaFormacion);
-              const orden = ordenPosiciones[nuevaFormacion] || ordenPosiciones['4-3-3'];
-              setTitulares(prev => {
-                const titularesActuales = [...prev];
-                const nuevosTitulares = titularesActuales.map((jugador, idx) => ({
-                  ...jugador,
-                  posicionCampo: orden[idx] || null,
-                }));
-                return nuevosTitulares.sort((a, b) => orden.indexOf(a.posicionCampo) - orden.indexOf(b.posicionCampo));
-              });
-            }}
-            style={{ minWidth: 70, zIndex: 9999, position: 'relative', pointerEvents: 'auto', background: '#fff' }}
-          >
-            {Object.keys(ordenPosiciones).map(f => (
-              <option key={f} value={f}>{f}</option>
-            ))}
-          </select>
-        </div>
-        {/* Equipos y resultado SIEMPRE ambos nombres, bien filtrados, en móvil debajo */}
-        <div className="flex flex-row items-center gap-2 w-full sm:w-auto justify-center sm:justify-end mt-2 sm:mt-0">
-          <span className="font-semibold text-xs truncate max-w-[80px]">
-            {evento?.condicion === 'Local' ? evento?.nombre_equipo : evento?.rival || evento?.equipoRival}
-          </span>
-          <span className="font-bold text-sm tracking-wide leading-none">{marcador.local} <span className="mx-1">-</span> {marcador.visitante}</span>
-          <span className="font-semibold text-xs truncate max-w-[80px]">
-            {evento?.condicion === 'Local' ? evento?.rival || evento?.equipoRival : evento?.nombre_equipo}
-          </span>
-        </div>
-      </div>
-      {/* Distribución principal: campo de juego y banquillo con acciones en banda lateral */}
-      <div className="flex flex-col md:flex-row gap-2 w-full">
-        {/* Banda lateral de acciones rápidas */}
-        <div className="hidden md:flex flex-col gap-2 justify-center items-center md:w-12 md:min-w-[48px] md:bg-gray-100 md:dark:bg-gray-800 md:p-2 md:rounded-lg md:shadow md:z-20">
-          <button onClick={() => setSeleccionandoAccion({ tipo: 'GOL' })} title="Gol" className="p-2 rounded-lg font-semibold text-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"><span role="img" aria-label="Gol">⚽</span></button>
-          <button onClick={() => setSeleccionandoAccion({ tipo: 'ASISTENCIA' })} title="Asistencia" className="p-2 rounded-lg font-semibold text-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"><span role="img" aria-label="Asistencia">🅰️</span></button>
-          <button onClick={() => setSeleccionandoAccion({ tipo: 'TIRO_A_PUERTA' })} title="Tiro a Puerta" className="p-2 rounded-lg font-semibold text-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"><span role="img" aria-label="Tiro a Puerta">🎯</span></button>
-          <button onClick={() => setSeleccionandoAccion({ tipo: 'TARJETA_AMARILLA' })} title="Amarilla" className="p-2 rounded-lg font-semibold text-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"><span role="img" aria-label="Amarilla">🟨</span></button>
-          <button onClick={() => setSeleccionandoAccion({ tipo: 'TARJETA_ROJA' })} title="Roja" className="p-2 rounded-lg font-semibold text-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"><span role="img" aria-label="Roja">🟥</span></button>
-          <button onClick={registrarGolEnContra} title="Gol Rival" className="p-2 rounded-lg font-semibold text-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"><span role="img" aria-label="Gol Rival">🥅</span></button>
-        </div>
-        {/* Campo de juego */}
-        <div className="flex-1 flex flex-col justify-center items-center min-w-[260px]">
-          <CampoDeJuego
-            titulares={titulares}
-            formacion={formacion}
-            onJugadorClick={handleJugadorClickEnVivo}
-            jugadorSeleccionadoId={jugadorParaIntercambio?.id}
-            tiempoEnCampo={tiempoEnCampo}
-            evaluaciones={evaluaciones}
-            onMomentumChange={handleMomentumChange}
-          />
-          {/* Acciones rápidas en horizontal para móvil */}
-          <div className="flex md:hidden flex-row flex-wrap gap-2 justify-center items-center mt-2">
-            <button onClick={() => setSeleccionandoAccion({ tipo: 'GOL' })} title="Gol" className="p-2 rounded-lg font-semibold text-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"><span role="img" aria-label="Gol">⚽</span></button>
-            <button onClick={() => setSeleccionandoAccion({ tipo: 'ASISTENCIA' })} title="Asistencia" className="p-2 rounded-lg font-semibold text-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"><span role="img" aria-label="Asistencia">🅰️</span></button>
-            <button onClick={() => setSeleccionandoAccion({ tipo: 'TIRO_A_PUERTA' })} title="Tiro a Puerta" className="p-2 rounded-lg font-semibold text-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"><span role="img" aria-label="Tiro a Puerta">🎯</span></button>
-            <button onClick={() => setSeleccionandoAccion({ tipo: 'TARJETA_AMARILLA' })} title="Amarilla" className="p-2 rounded-lg font-semibold text-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"><span role="img" aria-label="Amarilla">🟨</span></button>
-            <button onClick={() => setSeleccionandoAccion({ tipo: 'TARJETA_ROJA' })} title="Roja" className="p-2 rounded-lg font-semibold text-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"><span role="img" aria-label="Roja">🟥</span></button>
-            <button onClick={registrarGolEnContra} title="Gol Rival" className="p-2 rounded-lg font-semibold text-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"><span role="img" aria-label="Gol Rival">🥅</span></button>
-          </div>
-        </div>
-        {/* Banquillo */}
-        <div className="w-full md:w-1/3 max-w-xs bg-gray-100 dark:bg-gray-800 p-2 rounded-lg mt-2 md:mt-0">
-          <h4 className="font-bold mb-2">Banquillo ({suplentes.length})</h4>
-          <ul className="space-y-2 max-h-48 overflow-y-auto">
-            {suplentes.map(j => (
-              <li key={j.id} className={`flex justify-between items-center p-2 rounded-md transition-colors cursor-pointer ${jugadorParaIntercambio?.id === j.id ? 'bg-blue-200 dark:bg-blue-800' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}>
-                <span className="text-sm"><span className="font-bold w-6 inline-block">{j.numero_camiseta}</span> {j.nombre}</span>
-                <button onClick={() => seleccionarParaIntercambio(j)} className="text-yellow-500 hover:text-yellow-600 text-sm font-semibold">
-                  {jugadorParaIntercambio?.id === j.id ? 'Cancelar' : 'Sustituir'}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-      <div className="w-full bg-gray-100 dark:bg-gray-800 p-2 rounded-lg mt-2">
-        <h4 className="font-bold mb-2">Feed de Acciones</h4>
-        <ul className="space-y-2 max-h-32 overflow-y-auto">
-          {acciones.slice().reverse().map(accion => (
-            <li key={accion.id} className="text-sm">
-              <strong>{accion.minuto}'</strong> - {accion.tipo} - {accion.jugador_nombre}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <style>{`
-          .btn-control-vivo { display: inline-flex; align-items: center; gap: 0.5rem; color: white; font-weight: bold; padding: 0.3rem 0.7rem; border-radius: 0.5rem; background: linear-gradient(90deg, rgba(249,115,22,0.7), rgba(251,191,36,0.7), rgba(14,165,233,0.7)); border: 1px solid rgba(0,0,0,0.15); font-size: 0.85rem; }
-        `}</style>
-    </div>
-  );
-
-  // --- Renderizado Principal ---
-=======
   const renderEnVivo = () => (
     <div className="space-y-5">
       <div className="bg-white/95 dark:bg-slate-900/85 p-3 md:p-4 rounded-2xl shadow-lg border border-slate-200/80 dark:border-slate-700/70">
@@ -1466,8 +1232,8 @@ function DetalleEvento() {
     </div>
   );
 
-// --- Renderizado Principal ---
->>>>>>> 30b9da69e731d89e8faf6460634ba38b54959dde
+  // --- Renderizado Principal ---
+
   if (loading) {
     return <div className="text-center p-8 text-gray-500 dark:text-gray-400">Cargando evento...</div>;
   }

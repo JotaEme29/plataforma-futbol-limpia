@@ -68,11 +68,11 @@ const JugadorEnCampo = ({
 
       <div className={`player-card ${isSelected ? 'selected' : ''}`}>
         <div className="player-card-header">
+          <div className="jersey-circle">{displayNumber}</div>
           <div className="player-card-headings">
             <span className="player-card-name">{displayName}</span>
             <div className="player-card-subline">
               <span className="player-card-position">{displayPos}</span>
-              {displayNumber !== '' && <span className="player-card-number-inline">{displayNumber}</span>}
             </div>
           </div>
         </div>
