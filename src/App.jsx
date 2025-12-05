@@ -11,6 +11,8 @@ import AppLayout from './components/AppLayout.jsx';
 import Home from './pages/Home.jsx';
 import RegistroClub from './pages/RegistroClub.jsx'; // Importamos el componente correcto
 import AceptarInvitacion from './pages/AceptarInvitacion.jsx'; // Nueva página para invitados
+import PoliticaPrivacidad from './pages/legales/PoliticaPrivacidad.jsx';
+import TerminosCondiciones from './pages/legales/TerminosCondiciones.jsx';
 
 // Páginas privadas v2.0 (clubes)
 import DashboardClub from './pages/DashboardClub.jsx';
@@ -30,7 +32,9 @@ function App() {
         <Route path="/" element={<PublicRoute><Home /></PublicRoute>} />
         <Route path="/registro-club" element={<PublicRoute><RegistroClub /></PublicRoute>} />
         <Route path="/aceptar-invitacion" element={<PublicRoute><AceptarInvitacion /></PublicRoute>} />
- 
+        <Route path="/legales/privacidad" element={<PoliticaPrivacidad />} />
+        <Route path="/legales/terminos" element={<TerminosCondiciones />} />
+
         {/* Rutas privadas envueltas con layout */}
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/dashboard-club" element={<DashboardClub />} />
@@ -45,7 +49,7 @@ function App() {
           <Route path="/gestion-club" element={<GestionClubPage />} />
           <Route path="/estadisticas" element={<EstadisticasAnalisis />} />
         </Route>
- 
+
         {/* Catch-all 404 */}
         <Route path="*" element={<div><h2>404 - Página no encontrada</h2></div>} />
       </Routes>

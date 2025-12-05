@@ -1,5 +1,6 @@
 import React from 'react';
 import { FaPlusCircle, FaMinusCircle } from 'react-icons/fa';
+import './CampoDeJuego.css'; // Asegúrate de que los estilos CSS están importados
 
 // Función para determinar el color del momentum
 const getMomentumClass = (momentum) => {
@@ -20,24 +21,23 @@ const JugadorEnCampo = ({ jugador, posicion, onClick, isSelected, tiempoJugado, 
 
   return (
     <div
-      className="absolute flex flex-col items-center text-center transition-all duration-300 group"
+      className="player-card-container"
       style={{ top: posicion.top, left: posicion.left, transform: 'translate(-50%, -50%)' }}
       onClick={() => onClick(jugador)}
     >
       {/* Tiempo jugado */}
       {tiempoJugado && (
-        <div className="absolute -top-4 z-20 bg-black bg-opacity-70 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+        <div className="tiempo-jugado">
           {tiempoJugado}
         </div>
       )}
 
-      {/* Contenedor principal del jugador */}
+      {/* Tarjeta compacta y responsiva */}
       <div className={`player-card ${isSelected ? 'selected' : ''}`}>
         <div className="player-card-info">
-          <span className="player-card-number">#{jugador.numero_camiseta || '?'}</span>
+          <span className="player-card-number">{jugador.numero_camiseta || '?'}</span>
           <span className="player-card-name">{jugador.apodo || jugador.nombre}</span>
         </div>
-        
         {/* Controles de Evaluación Rápida */}
         <div className="player-card-controls">
           <button className="eval-btn minus" onClick={(e) => handleMomentumClick(e, -0.5)}>

@@ -2,6 +2,8 @@
 
 import { Outlet } from 'react-router-dom';
 import Navbar from '../pages/Navbar';
+import FeedbackWidget from './FeedbackWidget';
+import OnboardingTour from './OnboardingTour';
 
 function AppLayout() {
   return (
@@ -9,10 +11,12 @@ function AppLayout() {
       <Navbar />
       <main className="relative z-10">
         {/* El <Outlet> es donde React Router renderiza cada pagina (Dashboard, Plantilla, etc.) */}
-        <div className="w-full py-8 px-4 sm:px-6 lg:px-10 xl:px-16">
+        <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
           <Outlet />
         </div>
       </main>
+      <FeedbackWidget />
+      <OnboardingTour />
     </div>
   );
 }

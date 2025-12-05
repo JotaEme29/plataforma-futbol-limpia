@@ -52,14 +52,28 @@ function DetalleEvento() {
 
   // Estados para "En Vivo"
   const [fase, setFase] = useState('preparacion');
-  const [enPausa, setEnPausa] = useState(true); 
-  const [segundosReloj, setSegundosReloj] = useState(0); 
-  const [segundosAcumulados, setSegundosAcumulados] = useState(0); 
+  const [enPausa, setEnPausa] = useState(true);
+  const [segundosReloj, setSegundosReloj] = useState(0);
+  const [segundosAcumulados, setSegundosAcumulados] = useState(0);
+  const [timestampInicio, setTimestampInicio] = useState(null);
   const [acciones, setAcciones] = useState([]);
   const [seleccionandoAccion, setSeleccionandoAccion] = useState(null);
   const [marcador, setMarcador] = useState({ local: 0, visitante: 0 });
   const [evaluaciones, setEvaluaciones] = useState({}); 
   const [tiempoEnCampo, setTiempoEnCampo] = useState({});
+
+  // Estado para la pestaña activa en la vista móvil de la torre de control "En Vivo"
+  const [controlTab, setControlTab] = useState('acciones');
+
+  // Estado para el panel móvil
+  const [mobilePanel, setMobilePanel] = useState(null);
+
+  // Estados para la sección de observaciones de entrenamiento
+  const [observacionGuardada, setObservacionGuardada] = useState(false);
+  const [loadingObservacion, setLoadingObservacion] = useState(false);
+  const [errorObservacion, setErrorObservacion] = useState('');
+
+
 
   // --- Funciones auxiliares para determinar estado del evento ---
   const eventoYaPaso = useMemo(() => {
@@ -114,13 +128,28 @@ function DetalleEvento() {
       }
 
       const eventoData = { id: eventoSnap.id, ...eventoSnap.data() };
+
+      // Si el nombre del equipo no está en el evento, lo cargamos desde el documento del equipo.
+      if (eventoData.equipoId && !eventoData.nombre_equipo) {
+        try {
+          const equipoRef = doc(db, 'clubes', currentUser.clubId, 'equipos', eventoData.equipoId);
+          const equipoSnap = await getDoc(equipoRef);
+          if (equipoSnap.exists() && equipoSnap.data()?.nombre) {
+            // Asumimos que el campo del nombre del equipo es 'nombre'
+            eventoData.nombre_equipo = equipoSnap.data().nombre; 
+          }
+        } catch (e) {
+          console.warn("No se pudo cargar el nombre del equipo:", e);
+        }
+      }
+
       setEvento(eventoData);
       
       // Determinar tab inicial según estado del evento
       if (eventoData.evaluado || eventoData.fase === 'finalizado') {
         setActiveTab('evaluacion'); // Si ya finalizó, mostrar solo evaluación
       } else if (eventoData.fase && eventoData.fase !== 'preparacion') {
-        setActiveTab('en-vivo'); // Si está en curso, ir a En Vivo
+        setActiveTab('envivo'); // Si está en curso, ir a En Vivo
       } else {
         setActiveTab('convocatoria'); // Si no ha iniciado, mostrar convocatoria
       }
@@ -297,15 +326,29 @@ function DetalleEvento() {
     };
     requestWakeLock();
 
+    // Guardar el timestamp de inicio si no existe
+    if (!timestampInicio) {
+      setTimestampInicio(Date.now());
+    }
+
+    let lastTick = Date.now();
     const timer = setInterval(() => {
-      setSegundosReloj(prev => prev + 1);
-      setTiempoEnCampo(prev => {
-        const nuevoTiempo = { ...prev };
-        titulares.forEach(jugador => {
-          nuevoTiempo[jugador.id] = (nuevoTiempo[jugador.id] || 0) + 1;
+      if (!enPausa && timestampInicio) {
+        const ahora = Date.now();
+        const segundosTranscurridos = Math.floor((ahora - timestampInicio) / 1000);
+        setSegundosReloj(segundosAcumulados + segundosTranscurridos);
+
+        // Sumar los segundos reales transcurridos desde el último tick
+        const delta = Math.floor((ahora - lastTick) / 1000) || 1;
+        lastTick = ahora;
+        setTiempoEnCampo(prev => {
+          const nuevoTiempo = { ...prev };
+          titulares.forEach(jugador => {
+            nuevoTiempo[jugador.id] = (nuevoTiempo[jugador.id] || 0) + delta;
+          });
+          return nuevoTiempo;
         });
-        return nuevoTiempo;
-      });
+      }
     }, 1000);
 
     return () => {
@@ -316,7 +359,7 @@ function DetalleEvento() {
         wakeLockRef.current = null;
       }
     };
-  }, [enPausa, fase, titulares]);
+  }, [enPausa, fase, titulares, timestampInicio, segundosAcumulados]);
 
   // --- Funciones de utilidad ---
   const formatearFecha = (f) => {
@@ -439,11 +482,6 @@ function DetalleEvento() {
     }
   };
 
-  const seleccionarParaIntercambio = (jugador) => {
-    // Si se vuelve a hacer clic en el mismo jugador, se deselecciona
-    setJugadorParaIntercambio(prev => (prev?.id === jugador.id ? null : jugador));
-  };
-
   const guardarAlineacion = async () => {
     
     if (partidoFinalizado) {
@@ -472,7 +510,6 @@ function DetalleEvento() {
 
   const cambiarFase = async (nuevaFase) => {
     setFase(nuevaFase);
-    
     // Persistir la fase en Firebase
     try {
       const eventoRef = doc(db, 'clubes', currentUser.clubId, 'eventos', eventoId);
@@ -480,15 +517,21 @@ function DetalleEvento() {
     } catch (err) {
       console.error("Error al actualizar fase en Firebase:", err);
     }
-    
     if (nuevaFase === 'descanso' || nuevaFase === 'finalizado') {
-      setSegundosAcumulados(prev => prev + segundosReloj);
-      setSegundosReloj(0);
+      // Al pausar, suma el tiempo transcurrido y reinicia el timestamp
+      if (timestampInicio) {
+        const ahora = Date.now();
+        const segundosTranscurridos = Math.floor((ahora - timestampInicio) / 1000);
+        setSegundosAcumulados(prev => prev + segundosTranscurridos);
+        setSegundosReloj(0);
+        setTimestampInicio(null);
+      }
       setEnPausa(true);
-      if (nuevaFase === 'finalizado') sincronizarStatsParaEvaluacion(); // ¡SINCRONIZACIÓN AUTOMÁTICA!
+      if (nuevaFase === 'finalizado') sincronizarStatsParaEvaluacion();
     }
     if (nuevaFase === 'primer_tiempo' || nuevaFase === 'segundo_tiempo') {
       setEnPausa(false);
+      setTimestampInicio(Date.now());
     }
   };
 
@@ -765,7 +808,7 @@ function DetalleEvento() {
                 return (
                   <div key={jugador.id} className="grid grid-cols-7 items-center border-b border-black/5 dark:border-black/20 text-sm hover:bg-gradient-to-r hover:from-orange-500/10 hover:via-amber-400/10 hover:to-sky-500/10 dark:hover:from-orange-500/10 dark:hover:via-amber-400/10 dark:hover:to-sky-500/10 transition-colors">
                     <div className="col-span-2 p-2 font-medium">
-                      <span className="text-gray-500 mr-2">#{jugador.numero_camiseta}</span>
+                      <span className="font-bold text-gray-500 w-8 inline-block">{jugador.numero_camiseta}</span>
                       {jugador.apodo || jugador.nombre}
                     </div>
                     <div className={`p-2 text-center font-black text-lg ${puntuacionFinal >= 7 ? 'text-green-600' : puntuacionFinal >= 5 ? 'text-yellow-600' : 'text-red-600'}`}>
@@ -813,7 +856,7 @@ function DetalleEvento() {
                   return (
                     <div key={jugador.id} className="grid grid-cols-6 items-center border-t border-black/5 dark:border-black/20 text-sm hover:bg-gradient-to-r hover:from-orange-500/10 hover:via-amber-400/10 hover:to-sky-500/10 dark:hover:from-orange-500/10 dark:hover:via-amber-400/10 dark:hover:to-sky-500/10 transition-colors">
                       <div className="col-span-2 p-2 font-medium">
-                        <span className="text-gray-500 mr-2">#{jugador.numero_camiseta}</span>
+                        <span className="font-bold text-gray-500 w-8 inline-block">{jugador.numero_camiseta}</span>
                         {jugador.apodo || jugador.nombre}
                       </div>
                       <div className={`p-2 text-center font-bold ${momentum > 0 ? 'text-green-600' : momentum < 0 ? 'text-red-600' : 'text-gray-500'}`}>
@@ -847,7 +890,7 @@ function DetalleEvento() {
           <ul className="space-y-2 max-h-96 overflow-y-auto">
             {noConvocados.map(j => (
               <li key={j.id} className="flex justify-between items-center p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
-                <span className="text-sm">#{j.numero_camiseta} {j.nombre} {j.apellidos}</span>
+                <span className="text-sm"><span className="font-bold w-6 inline-block">{j.numero_camiseta}</span> {j.nombre} {j.apellidos}</span>
                 <button onClick={() => moverJugadorConvocatoria(j, true)} className="text-blue-500 hover:text-blue-700 text-sm font-semibold">Añadir</button>
               </li>
             ))}
@@ -859,7 +902,7 @@ function DetalleEvento() {
           <ul className="space-y-2 max-h-96 overflow-y-auto">
             {convocados.map(j => (
               <li key={j.id} className="flex justify-between items-center p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
-                <span className="text-sm">#{j.numero_camiseta} {j.nombre} {j.apellidos}</span>
+                <span className="text-sm"><span className="font-bold w-6 inline-block">{j.numero_camiseta}</span> {j.nombre} {j.apellidos}</span>
                 <button onClick={() => moverJugadorConvocatoria(j, false)} className="text-red-500 hover:text-red-700 text-sm font-semibold">Quitar</button>
               </li>
             ))}
@@ -886,35 +929,30 @@ function DetalleEvento() {
             onChange={e => setFormacion(e.target.value)}
             className="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md py-1 px-2"
           >
-            <option value="4-3-3">4-3-3</option>
-            <option value="4-4-2">4-4-2</option>
-            <option value="3-5-2">3-5-2</option>
-            <option value="4-1-4-1">4-1-4-1</option>
-            <option value="3-4-3">3-4-3</option>
-            <option value="5-4-1">5-4-1</option>
-            <option value="4-3-2-1">4-3-2-1</option>
-            <option value="4-2-3-1">4-2-3-1</option>
+            {Object.keys(ordenPosiciones).map(f => (
+              <option key={f} value={f}>{f}</option>
+            ))}
           </select>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <div className="w-full aspect-[3/2] max-w-2xl mx-auto">
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
+        <div className="xl:col-span-3 flex justify-center items-center">
+          <div className="w-full max-w-lg mx-auto">
             <CampoDeJuego 
-              titulares={titulares} 
+              titulares={titulares}
               formacion={formacion} 
               onJugadorClick={quitarTitular} 
               jugadorSeleccionadoId={jugadorParaIntercambio?.id} 
             />
           </div>
         </div>
-        <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <div className="xl:col-span-2 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
           <h4 className="font-bold mb-2 text-gray-800 dark:text-gray-200">Banquillo ({suplentes.length})</h4>
           <ul className="space-y-2 max-h-96 overflow-y-auto">
             {suplentes.map(j => (
               <li key={j.id} className={`flex justify-between items-center p-2 rounded-md transition-colors cursor-pointer ${jugadorParaIntercambio?.id === j.id ? 'bg-blue-200 dark:bg-blue-800' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
-                <span className="text-sm">#{j.numero_camiseta} {j.nombre}</span>
+                <span className="text-sm"><span className="font-bold w-6 inline-block">{j.numero_camiseta}</span> {j.nombre}</span>
                 <div>
                   {activeTab === 'alineacion' ? (
                     <button onClick={() => agregarTitular(j)} className="text-blue-500 hover:text-blue-700 text-sm font-semibold">Alinear</button>
@@ -935,118 +973,242 @@ function DetalleEvento() {
     </div>
   );
 
-  const renderEnVivo = () => (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Columna de Controles y Acciones */}
-      <div className="lg:col-span-1 space-y-6">
-        {/* Panel de Cronómetro y Fases */}
-        <div className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-lg shadow-md border border-black/10 text-center">
-          <h4 className="font-bold mb-2">Marcador</h4>
-          <div className="flex items-center justify-center gap-4">
-            <div className="text-center">
-              <div className="text-4xl font-black">{evento.condicion === 'Local' ? marcador.local : marcador.visitante}</div>
-              <div className="text-xs font-semibold text-gray-500">TU EQUIPO</div>
-            </div>
-            <div className="text-4xl font-bold text-gray-400">-</div>
-            <div className="text-center">
-              <div className="text-4xl font-black">{evento.condicion === 'Local' ? marcador.visitante : marcador.local}</div>
-              <div className="text-xs font-semibold text-gray-500">RIVAL</div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-gradient-to-br from-orange-500/20 via-amber-400/20 to-sky-500/20 p-4 rounded-lg text-center border border-black/5">
-          <Cronometro segundos={segundosReloj} fase={fase} />
-          <div className="flex justify-center gap-2 mt-4">
-            {fase === 'preparacion' && <button onClick={() => cambiarFase('primer_tiempo')} className="btn-control-vivo bg-green-500"><FaPlay /> Iniciar 1T</button>}
-            {fase === 'primer_tiempo' && (enPausa ? <button onClick={() => setEnPausa(false)} className="btn-control-vivo bg-green-500"><FaPlay /> Reanudar</button> : <button onClick={() => setEnPausa(true)} className="btn-control-vivo bg-yellow-500"><FaPause /> Pausar</button>)}
-            {fase === 'primer_tiempo' && <button onClick={() => cambiarFase('descanso')} className="btn-control-vivo bg-red-500"><FaFlag /> Descanso</button>}
-            {fase === 'descanso' && <button onClick={() => cambiarFase('segundo_tiempo')} className="btn-control-vivo bg-green-500"><FaPlay /> Iniciar 2T</button>}
-            {fase === 'segundo_tiempo' && (enPausa ? <button onClick={() => setEnPausa(false)} className="btn-control-vivo bg-green-500"><FaPlay /> Reanudar</button> : <button onClick={() => setEnPausa(true)} className="btn-control-vivo bg-yellow-500"><FaPause /> Pausar</button>)}
-            {fase === 'segundo_tiempo' && <button onClick={() => cambiarFase('finalizado')} className="btn-control-vivo bg-red-500"><FaStop /> Finalizar</button>}
-          </div>
-        </div>
+  const seleccionarParaIntercambio = (jugador) => {
+    // Si se vuelve a hacer clic en el mismo jugador, se deselecciona
+    setJugadorParaIntercambio(prev => (prev?.id === jugador.id ? null : jugador));
+  };
 
-        {/* Panel de Registro de Acciones */}
-        <div className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-lg shadow-md border border-black/10">
-          <h4 className="font-bold mb-3">Registrar Acción</h4>
-          {seleccionandoAccion && (
-            <div className="p-3 mb-3 bg-blue-100 dark:bg-blue-900/50 rounded-md text-center">
-              <p className="font-semibold">Selecciona un jugador para: <strong>{seleccionandoAccion.tipo}</strong></p>
-              <button onClick={() => setSeleccionandoAccion(null)} className="text-xs text-red-500 mt-1">Cancelar</button>
-            </div>
+  const MarcadorCronoPanel = ({ isMobileHeader }) => (
+    <div className={`bg-gradient-to-br from-gray-800 via-blue-900 to-gray-700 text-white px-2 py-1 rounded-md shadow border border-black/10 ${isMobileHeader ? 'sticky top-0 z-30' : ''}`}
+      style={{ minHeight: isMobileHeader ? 48 : 60, maxHeight: isMobileHeader ? 60 : 80 }}>
+      <div className="flex flex-row justify-between items-center gap-1">
+        <div className="flex-1 text-center font-semibold text-xs truncate">
+          {evento.condicion === 'Local' ? evento.nombre_equipo : evento.equipoRival}
+        </div>
+        <div className="flex-1 text-center">
+          <span className="text-xl font-extrabold tracking-wide">{marcador.local} <span className="mx-1">-</span> {marcador.visitante}</span>
+        </div>
+        <div className="flex-1 text-center font-semibold text-xs truncate">
+          {evento.condicion === 'Visitante' ? evento.nombre_equipo : evento.equipoRival}
+        </div>
+      </div>
+      <div className="mt-1 flex flex-col items-center gap-1">
+        <Cronometro
+          segundos={segundosReloj}
+          fase={fase}
+        />
+        {/* Botones de control de partido */}
+        <div className="flex flex-wrap gap-2 justify-center mt-2">
+          {fase === 'preparacion' && (
+            <button className="btn-control-vivo" onClick={() => cambiarFase('primer_tiempo')}>Iniciar Partido</button>
           )}
-          <div className="grid grid-cols-3 gap-2">
-            <button onClick={() => setSeleccionandoAccion({ tipo: 'GOL' })} className="btn-accion">⚽ Gol</button>
-            <button onClick={() => setSeleccionandoAccion({ tipo: 'TIRO_A_PUERTA' })} className="btn-accion">🎯 A Puerta</button>
-            <button onClick={() => setSeleccionandoAccion({ tipo: 'CORNERS' })} className="btn-accion">📐 Córner</button>
-            <button onClick={() => setSeleccionandoAccion({ tipo: 'ASISTENCIA' })} className="btn-accion">🤝 Asistencia</button>
-            <button onClick={() => setSeleccionandoAccion({ tipo: 'AMARILLA' })} className="btn-accion">🟨 Amarilla</button>
-            <button onClick={() => setSeleccionandoAccion({ tipo: 'ROJA' })} className="btn-accion">🟥 Roja</button>
-            <button onClick={registrarGolEnContra} className="btn-accion col-span-2">🥅 Gol en Contra</button>
-          </div>
-        </div>
-
-        {/* Panel de Suplentes en Vivo */}
-        <div className="border border-black/10 dark:border-black/20 rounded-lg p-4 bg-white/70 dark:bg-gray-800/70">
-          <h4 className="font-bold mb-2 text-gray-800 dark:text-gray-200">Banquillo ({suplentes.length})</h4>
-          <ul className="space-y-2 max-h-48 overflow-y-auto">
-            {suplentes.map(j => (
-              <li key={j.id} className={`flex justify-between items-center p-2 rounded-md transition-colors cursor-pointer ${jugadorParaIntercambio?.id === j.id ? 'bg-blue-200 dark:bg-blue-800' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">#{j.numero_camiseta} {j.nombre}</span>
-                  {tiempoEnCampo[j.id] > 0 && (
-                    <span className="text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 px-1.5 py-0.5 rounded-full">
-                      {formatTime(tiempoEnCampo[j.id])}
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <button onClick={() => seleccionarParaIntercambio(j)} className="text-yellow-500 hover:text-yellow-600 text-sm font-semibold">
-                    {jugadorParaIntercambio?.id === j.id ? 'Cancelar' : 'Sustituir'}
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+          {fase === 'primer_tiempo' && (
+            <>
+              <button className="btn-control-vivo" onClick={() => setEnPausa(!enPausa)}>{enPausa ? 'Reanudar' : 'Pausar'}</button>
+              <button className="btn-control-vivo" onClick={() => cambiarFase('descanso')}>Terminar 1er Tiempo</button>
+            </>
+          )}
+          {fase === 'descanso' && (
+            <button className="btn-control-vivo" onClick={() => cambiarFase('segundo_tiempo')}>Iniciar 2do Tiempo</button>
+          )}
+          {fase === 'segundo_tiempo' && (
+            <>
+              <button className="btn-control-vivo" onClick={() => setEnPausa(!enPausa)}>{enPausa ? 'Reanudar' : 'Pausar'}</button>
+              <button className="btn-control-vivo" onClick={() => cambiarFase('finalizado')}>Finalizar Partido</button>
+            </>
+          )}
         </div>
       </div>
-
-      {/* Columna de Campo y Feed */}
-      <div className="lg:col-span-2 space-y-6">
-        <div className="w-full aspect-[3/2] max-w-2xl mx-auto">
-          <CampoDeJuego 
-            titulares={titulares} 
-            formacion={formacion} 
-            onJugadorClick={handleJugadorClickEnVivo} 
-            jugadorSeleccionadoId={jugadorParaIntercambio?.id}
-            tiempoEnCampo={tiempoEnCampo}
-            evaluaciones={evaluaciones}
-            onMomentumChange={handleMomentumChange}
-          />
-        </div>
-            <div className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-lg shadow-md border border-black/10">
-          <h4 className="font-bold mb-3">Feed de Acciones</h4>
-          <ul className="space-y-2 max-h-48 overflow-y-auto text-sm">
-            {acciones.slice().reverse().map(accion => (
-              <li key={accion.id} className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-700/50 rounded-md">
-                <span className="font-bold">{accion.minuto}'</span>
-                <span>{accion.tipo} - {accion.jugador_nombre}</span>
-              </li>
-            ))}
-            {acciones.length === 0 && <p className="text-gray-500 text-center">No hay acciones registradas.</p>}
-          </ul>
-        </div>
-      </div>
-      <style>{`
-        .btn-control-vivo { display: inline-flex; align-items: center; gap: 0.5rem; color: white; font-weight: bold; padding: 0.5rem 1rem; border-radius: 0.5rem; background: linear-gradient(90deg, rgba(249,115,22,0.7), rgba(251,191,36,0.7), rgba(14,165,233,0.7)); border: 1px solid rgba(0,0,0,0.15); }
-        .btn-accion { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; background-color: #f3f4f6; border: 1px solid #d1d5db; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; transition: all 0.2s; }
-        .dark .btn-accion { background-color: #374151; border-color: #4b5563; }
-        .btn-accion:hover { background-color: #e5e7eb; border-color: #9ca3af; }
-        .dark .btn-accion:hover { background-color: #4b5563; border-color: #6b7280; }
-      `}</style>
     </div>
   );
 
+  const AccionesPanel = () => (
+    <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded-lg">
+      <h4 className="font-bold mb-2 text-xs">Acciones Rápidas</h4>
+      <div className="grid grid-cols-3 gap-1">
+        <button onClick={() => setSeleccionandoAccion({ tipo: 'GOL' })} className="btn-accion-mini" title="Gol">
+          <span role="img" aria-label="Gol">⚽</span>
+        </button>
+        <button onClick={() => setSeleccionandoAccion({ tipo: 'ASISTENCIA' })} className="btn-accion-mini" title="Asistencia">
+          <span role="img" aria-label="Asistencia">🅰️</span>
+        </button>
+        <button onClick={() => setSeleccionandoAccion({ tipo: 'TIRO_A_PUERTA' })} className="btn-accion-mini" title="Tiro a Puerta">
+          <span role="img" aria-label="Tiro a Puerta">🎯</span>
+        </button>
+        <button onClick={() => setSeleccionandoAccion({ tipo: 'TARJETA_AMARILLA' })} className="btn-accion-mini" title="Amarilla">
+          <span role="img" aria-label="Amarilla">🟨</span>
+        </button>
+        <button onClick={() => setSeleccionandoAccion({ tipo: 'TARJETA_ROJA' })} className="btn-accion-mini" title="Roja">
+          <span role="img" aria-label="Roja">🟥</span>
+        </button>
+        <button onClick={registrarGolEnContra} className="btn-accion-mini col-span-3" title="Gol Rival">
+          <span role="img" aria-label="Gol Rival">🥅</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  const BanquilloPanel = () => (
+    <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+      <h4 className="font-bold mb-2">Banquillo ({suplentes.length})</h4>
+      <ul className="space-y-2 max-h-48 overflow-y-auto">
+        {suplentes.map(j => (
+          <li key={j.id} className={`flex justify-between items-center p-2 rounded-md transition-colors cursor-pointer ${jugadorParaIntercambio?.id === j.id ? 'bg-blue-200 dark:bg-blue-800' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}>
+            <span className="text-sm"><span className="font-bold w-6 inline-block">{j.numero_camiseta}</span> {j.nombre}</span>
+            <button onClick={() => seleccionarParaIntercambio(j)} className="text-yellow-500 hover:text-yellow-600 text-sm font-semibold">
+              {jugadorParaIntercambio?.id === j.id ? 'Cancelar' : 'Sustituir'}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+
+  const FeedPanel = () => (
+    <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+      <h4 className="font-bold mb-2">Feed de Acciones</h4>
+      <ul className="space-y-2 max-h-48 overflow-y-auto">
+        {acciones.slice().reverse().map(accion => (
+          <li key={accion.id} className="text-sm">
+            <strong>{accion.minuto}'</strong> - {accion.tipo} - {accion.jugador_nombre}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+
+  // Nueva organización compacta y clara
+    return (
+      <div className="flex flex-col gap-2 w-full">
+        {/* Panel superior reorganizado: fase, tiempo, botones y selector de sistema táctico */}
+        <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-2 bg-gradient-to-br from-gray-800 via-blue-900 to-gray-700 text-white px-2 py-1 rounded-lg shadow border border-black/10 min-h-[34px] max-h-[38px]">
+          {/* Izquierda: Fase, tiempo y botones */}
+          <div className="flex flex-row items-center gap-2 min-w-[120px] w-full sm:w-auto justify-center sm:justify-start">
+            <span className="font-semibold text-xs bg-black/30 px-2 py-0.5 rounded">{fase === 'primer_tiempo' ? '1T' : fase === 'segundo_tiempo' ? '2T' : fase === 'descanso' ? 'Descanso' : fase === 'finalizado' ? 'Finalizado' : 'Preparación'}</span>
+            <span className="font-mono font-bold text-sm bg-black/30 px-2 py-0.5 rounded" style={{minWidth:'32px',textAlign:'center'}}>
+              <Cronometro segundos={segundosReloj} fase={fase} style={{fontSize:'0.9rem',fontWeight:'bold',lineHeight:'1'}} />
+            </span>
+            {/* Botones de control compactos */}
+            {fase === 'preparacion' && (
+              <button className="btn-control-vivo" style={{padding:'0.08rem 0.4rem',fontSize:'0.75rem'}} onClick={() => cambiarFase('primer_tiempo')}>Iniciar</button>
+            )}
+            {fase === 'primer_tiempo' && (
+              <>
+                <button className="btn-control-vivo" style={{padding:'0.08rem 0.4rem',fontSize:'0.75rem'}} onClick={() => setEnPausa(!enPausa)}>{enPausa ? 'Reanudar' : 'Pausar'}</button>
+                <button className="btn-control-vivo" style={{padding:'0.08rem 0.4rem',fontSize:'0.75rem'}} onClick={() => cambiarFase('descanso')}>Fin 1T</button>
+              </>
+            )}
+            {fase === 'descanso' && (
+              <button className="btn-control-vivo" style={{padding:'0.08rem 0.4rem',fontSize:'0.75rem'}} onClick={() => cambiarFase('segundo_tiempo')}>Iniciar 2T</button>
+            )}
+            {fase === 'segundo_tiempo' && (
+              <>
+                <button className="btn-control-vivo" style={{padding:'0.08rem 0.4rem',fontSize:'0.75rem'}} onClick={() => setEnPausa(!enPausa)}>{enPausa ? 'Reanudar' : 'Pausar'}</button>
+                <button className="btn-control-vivo" style={{padding:'0.08rem 0.4rem',fontSize:'0.75rem'}} onClick={() => cambiarFase('finalizado')}>Finalizar</button>
+              </>
+            )}
+          </div>
+          {/* Selector de sistema táctico: visible y accesible en móvil */}
+          <div className="flex flex-row items-center gap-2 w-full sm:w-auto justify-center sm:justify-end">
+            <label htmlFor="formacion-select" className="text-xs font-semibold">Sistema táctico:</label>
+            <select
+              id="formacion-select"
+              className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-xs font-semibold border border-gray-300 dark:border-gray-700 focus:outline-none z-50 relative !pointer-events-auto !bg-white"
+              value={formacion}
+              onChange={e => {
+                const nuevaFormacion = e.target.value;
+                setFormacion(nuevaFormacion);
+                const orden = ordenPosiciones[nuevaFormacion] || ordenPosiciones['4-3-3'];
+                setTitulares(prev => {
+                  const titularesActuales = [...prev];
+                  const nuevosTitulares = titularesActuales.map((jugador, idx) => ({
+                    ...jugador,
+                    posicionCampo: orden[idx] || null,
+                  }));
+                  return nuevosTitulares.sort((a, b) => orden.indexOf(a.posicionCampo) - orden.indexOf(b.posicionCampo));
+                });
+              }}
+              style={{ minWidth: 70, zIndex: 9999, position: 'relative', pointerEvents: 'auto', background: '#fff' }}
+            >
+              {Object.keys(ordenPosiciones).map(f => (
+                <option key={f} value={f}>{f}</option>
+              ))}
+            </select>
+          </div>
+          {/* Equipos y resultado SIEMPRE ambos nombres, bien filtrados, en móvil debajo */}
+          <div className="flex flex-row items-center gap-2 w-full sm:w-auto justify-center sm:justify-end mt-2 sm:mt-0">
+            <span className="font-semibold text-xs truncate max-w-[80px]">
+              {evento?.condicion === 'Local' ? evento?.nombre_equipo : evento?.rival || evento?.equipoRival}
+            </span>
+            <span className="font-bold text-sm tracking-wide leading-none">{marcador.local} <span className="mx-1">-</span> {marcador.visitante}</span>
+            <span className="font-semibold text-xs truncate max-w-[80px]">
+              {evento?.condicion === 'Local' ? evento?.rival || evento?.equipoRival : evento?.nombre_equipo}
+            </span>
+          </div>
+        </div>
+        {/* Distribución principal: campo de juego y banquillo con acciones en banda lateral */}
+        <div className="flex flex-col md:flex-row gap-2 w-full">
+          {/* Banda lateral de acciones rápidas */}
+          <div className="hidden md:flex flex-col gap-2 justify-center items-center md:w-12 md:min-w-[48px] md:bg-gray-100 md:dark:bg-gray-800 md:p-2 md:rounded-lg md:shadow md:z-20">
+            <button onClick={() => setSeleccionandoAccion({ tipo: 'GOL' })} title="Gol" className="p-2 rounded-lg font-semibold text-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"><span role="img" aria-label="Gol">⚽</span></button>
+            <button onClick={() => setSeleccionandoAccion({ tipo: 'ASISTENCIA' })} title="Asistencia" className="p-2 rounded-lg font-semibold text-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"><span role="img" aria-label="Asistencia">🅰️</span></button>
+            <button onClick={() => setSeleccionandoAccion({ tipo: 'TIRO_A_PUERTA' })} title="Tiro a Puerta" className="p-2 rounded-lg font-semibold text-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"><span role="img" aria-label="Tiro a Puerta">🎯</span></button>
+            <button onClick={() => setSeleccionandoAccion({ tipo: 'TARJETA_AMARILLA' })} title="Amarilla" className="p-2 rounded-lg font-semibold text-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"><span role="img" aria-label="Amarilla">🟨</span></button>
+            <button onClick={() => setSeleccionandoAccion({ tipo: 'TARJETA_ROJA' })} title="Roja" className="p-2 rounded-lg font-semibold text-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"><span role="img" aria-label="Roja">🟥</span></button>
+            <button onClick={registrarGolEnContra} title="Gol Rival" className="p-2 rounded-lg font-semibold text-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"><span role="img" aria-label="Gol Rival">🥅</span></button>
+          </div>
+          {/* Campo de juego */}
+          <div className="flex-1 flex flex-col justify-center items-center min-w-[260px]">
+            <CampoDeJuego 
+              titulares={titulares}
+              formacion={formacion}
+              onJugadorClick={handleJugadorClickEnVivo}
+              jugadorSeleccionadoId={jugadorParaIntercambio?.id}
+              tiempoEnCampo={tiempoEnCampo}
+              evaluaciones={evaluaciones}
+              onMomentumChange={handleMomentumChange}
+            />
+            {/* Acciones rápidas en horizontal para móvil */}
+            <div className="flex md:hidden flex-row flex-wrap gap-2 justify-center items-center mt-2">
+              <button onClick={() => setSeleccionandoAccion({ tipo: 'GOL' })} title="Gol" className="p-2 rounded-lg font-semibold text-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"><span role="img" aria-label="Gol">⚽</span></button>
+              <button onClick={() => setSeleccionandoAccion({ tipo: 'ASISTENCIA' })} title="Asistencia" className="p-2 rounded-lg font-semibold text-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"><span role="img" aria-label="Asistencia">🅰️</span></button>
+              <button onClick={() => setSeleccionandoAccion({ tipo: 'TIRO_A_PUERTA' })} title="Tiro a Puerta" className="p-2 rounded-lg font-semibold text-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"><span role="img" aria-label="Tiro a Puerta">🎯</span></button>
+              <button onClick={() => setSeleccionandoAccion({ tipo: 'TARJETA_AMARILLA' })} title="Amarilla" className="p-2 rounded-lg font-semibold text-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"><span role="img" aria-label="Amarilla">🟨</span></button>
+              <button onClick={() => setSeleccionandoAccion({ tipo: 'TARJETA_ROJA' })} title="Roja" className="p-2 rounded-lg font-semibold text-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"><span role="img" aria-label="Roja">🟥</span></button>
+              <button onClick={registrarGolEnContra} title="Gol Rival" className="p-2 rounded-lg font-semibold text-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"><span role="img" aria-label="Gol Rival">🥅</span></button>
+            </div>
+          </div>
+          {/* Banquillo */}
+          <div className="w-full md:w-1/3 max-w-xs bg-gray-100 dark:bg-gray-800 p-2 rounded-lg mt-2 md:mt-0">
+            <h4 className="font-bold mb-2">Banquillo ({suplentes.length})</h4>
+            <ul className="space-y-2 max-h-48 overflow-y-auto">
+              {suplentes.map(j => (
+                <li key={j.id} className={`flex justify-between items-center p-2 rounded-md transition-colors cursor-pointer ${jugadorParaIntercambio?.id === j.id ? 'bg-blue-200 dark:bg-blue-800' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}>
+                  <span className="text-sm"><span className="font-bold w-6 inline-block">{j.numero_camiseta}</span> {j.nombre}</span>
+                  <button onClick={() => seleccionarParaIntercambio(j)} className="text-yellow-500 hover:text-yellow-600 text-sm font-semibold">
+                    {jugadorParaIntercambio?.id === j.id ? 'Cancelar' : 'Sustituir'}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        <div className="w-full bg-gray-100 dark:bg-gray-800 p-2 rounded-lg mt-2">
+          <h4 className="font-bold mb-2">Feed de Acciones</h4>
+          <ul className="space-y-2 max-h-32 overflow-y-auto">
+            {acciones.slice().reverse().map(accion => (
+              <li key={accion.id} className="text-sm">
+                <strong>{accion.minuto}'</strong> - {accion.tipo} - {accion.jugador_nombre}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <style>{`
+          .btn-control-vivo { display: inline-flex; align-items: center; gap: 0.5rem; color: white; font-weight: bold; padding: 0.3rem 0.7rem; border-radius: 0.5rem; background: linear-gradient(90deg, rgba(249,115,22,0.7), rgba(251,191,36,0.7), rgba(14,165,233,0.7)); border: 1px solid rgba(0,0,0,0.15); font-size: 0.85rem; }
+        `}</style>
+      </div>
+    );
+  
   // --- Renderizado Principal ---
   if (loading) {
     return <div className="text-center p-8 text-gray-500 dark:text-gray-400">Cargando evento...</div>;
@@ -1113,7 +1275,7 @@ function DetalleEvento() {
                   key={jugador.id} 
                   className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
                 >
-                  <span className="text-lg font-bold text-gray-400 dark:text-gray-500">#{jugador.numero_camiseta}</span>
+                  <span className="text-lg font-bold text-gray-400 dark:text-gray-500 w-8 text-center">{jugador.numero_camiseta}</span>
                   <div>
                     <p className="font-semibold text-gray-900 dark:text-white">{jugador.nombre} {jugador.apellidos}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{jugador.posicion}</p>

@@ -1,72 +1,90 @@
-/* ============================================= */
-/* == Estilos para la Tarjeta de Jugador en Campo == */
-/* ============================================= */
+/* src/components/CampoDeJuego.css */
 
+/* Contenedor principal para posicionamiento absoluto */
+.player-card-container {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: all 0.3s ease-out;
+  z-index: 10; /* ¡IMPORTANTE! Asegura que la tarjeta esté sobre las líneas del campo */
+  min-width: 0;
+}
+
+/* Etiqueta de tiempo jugado */
+.tiempo-jugado {
+  position: absolute;
+  top: -0.9rem; /* Ajusta para que quede encima de la tarjeta */
+  z-index: 11; /* Debe estar por encima de la tarjeta */
+  background-color: rgba(0, 0, 0, 0.75);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+
+/* Tarjeta del jugador */
 .player-card {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  width: 110px;
-  padding: 8px;
-  background-color: rgba(255, 255, 255, 0.9);
-  border: 2px solid transparent;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s ease-in-out;
+  gap: 0.08rem; /* más compacto */
+  width: 32px; /* más pequeño para evitar scroll */
+  padding: 0.05rem; /* más compacto */
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px) saturate(1.2);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  transition: all 0.25s ease-out;
   cursor: pointer;
-}
-
-.dark .player-card {
-  background-color: rgba(31, 41, 55, 0.9); /* gray-800 con opacidad */
-  border-color: transparent;
-}
-
-.player-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+  overflow: hidden;
 }
 
 .player-card.selected {
   border-color: #3b82f6; /* blue-500 */
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25), 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+.player-card:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* Info del jugador (número y nombre) */
 .player-card-info {
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-weight: 600;
+  gap: 1px;
+  width: 100%;
 }
 
 .player-card-number {
-  font-size: 0.8rem;
-  color: #6b7280; /* gray-500 */
-}
-
-.dark .player-card-number {
-  color: #9ca3af; /* gray-400 */
+  font-size: 0.6rem; /* 12px */
+  color: #4b5563; /* gray-600 */
+  font-weight: 700;
 }
 
 .player-card-name {
-  font-size: 0.9rem;
+  font-size: 0.6rem; /* 12px (reducido para móvil) */
+  color: #1f2937; /* gray-800 */
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100%;
+  width: 100%;
 }
 
-/* --- Controles de Evaluación --- */
+/* Controles de momentum (+/-) */
 .player-card-controls {
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
   align-items: center;
-  border-top: 1px solid #e5e7eb; /* gray-200 */
-  padding-top: 6px;
-  margin-top: 4px;
-}
-
-.dark .player-card-controls {
-  border-top-color: #4b5563; /* gray-600 */
+  gap: 0.25rem; /* 4px */
+  width: 100%;
+  margin-top: 0.25rem;
 }
 
 .eval-btn {
@@ -74,31 +92,99 @@
   border: none;
   cursor: pointer;
   padding: 0;
-  font-size: 1.4rem; /* Iconos más grandes */
+  font-size: 1.1rem; /* Tamaño base de íconos */
   line-height: 1;
-  transition: transform 0.1s ease, color 0.2s;
+  transition: transform 0.15s, color 0.2s;
 }
 
-.eval-btn:active {
-  transform: scale(0.9);
-}
-
+.eval-btn:hover { transform: scale(1.1); }
 .eval-btn.plus { color: #16a34a; } /* green-600 */
 .eval-btn.minus { color: #dc2626; } /* red-600 */
 .eval-btn.plus:hover { color: #15803d; } /* green-700 */
 .eval-btn.minus:hover { color: #b91c1c; } /* red-700 */
 
 .momentum-display {
-  font-size: 1.1rem;
+  font-size: 0.8rem; /* 13px */
   font-weight: 700;
-  min-width: 30px;
+  min-width: 28px;
   text-align: center;
+  color: #1f2937; /* gray-800 */
 }
 
-.momentum-positive { color: #16a34a; }
-.momentum-negative { color: #dc2626; }
-.momentum-neutral { color: #6b7280; }
+.momentum-positive { color: #16a34a; } /* green-600 */
+.momentum-negative { color: #dc2626; } /* red-600 */
+.momentum-neutral { color: #6b7280; } /* gray-500 */
 
-.dark .momentum-neutral {
-  color: #9ca3af;
+/* --- Dark Mode --- */
+.dark .player-card {
+  background: rgba(31, 41, 55, 0.6); /* gray-800 con más opacidad */
+}
+
+.dark .player-card.selected {
+  border-color: #60a5fa; /* blue-400 */
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.25);
+}
+
+.dark .player-card-number {
+  color: #9ca3af; /* gray-400 */
+}
+
+.dark .player-card-name {
+  color: #f3f4f6; /* gray-100 */
+}
+
+.dark .momentum-display {
+  color: #d1d5db; /* gray-300 */
+}
+
+/* --- Responsividad --- */
+@media (min-width: 640px) { /* sm */
+  .player-card {
+    width: 85px;
+    padding: 0.5rem 0.375rem; /* 8px 6px */
+    border-radius: 14px;
+  }
+  .player-card-number {
+    font-size: 0.8rem;
+  }
+  .player-card-name {
+    font-size: 0.875rem; /* 14px */
+  }
+  .eval-btn {
+    font-size: 1.2rem;
+  }
+  .momentum-display {
+    font-size: 0.875rem; /* 14px */
+  }
+}
+
+/* Botones de acción mini */
+.btn-accion-mini {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
+  padding: 0.18rem 0.28rem;
+  border-radius: 0.35rem;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  min-width: 28px;
+  min-height: 28px;
+}
+
+.dark .btn-accion-mini {
+  background-color: #374151;
+  border-color: #4b5563;
+}
+
+.btn-accion-mini:hover {
+  background-color: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.dark .btn-accion-mini:hover {
+  background-color: #4b5563;
+  border-color: #6b7280;
 }

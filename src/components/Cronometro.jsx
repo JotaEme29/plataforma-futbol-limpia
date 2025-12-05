@@ -19,14 +19,9 @@ const Cronometro = ({ segundos, fase }) => {
   };
 
   return (
-    <div className="text-center">
-      <div className="text-6xl font-black text-gray-900 dark:text-white tracking-widest tabular-nums">
-        {formatTime(segundos)}
-      </div>
-      <div className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1">
-        {getFaseTexto()}
-      </div>
-    </div>
+    <span style={{display:'inline-block',fontVariantNumeric:'tabular-nums'}}>
+      {formatTime(segundos)}
+    </span>
   );
 };
 

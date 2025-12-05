@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion'; 
+import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth.js';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { VisionCoachLogo, FootballField, Trophy, Whistle } from '../components/FootballSVG.jsx';
@@ -34,14 +34,14 @@ const LoginForm = () => {
       {/* h2 y p.sub -> Clases de texto de Tailwind */}
       <h2 className="text-center text-2xl font-bold mb-1">Iniciar Sesión</h2>
       <p className="text-center text-gray-500 dark:text-gray-400 mb-6">Bienvenido de nuevo</p>
-      
+
       {/* auth-error -> Clases para un banner de error */}
       {error && (
         <p className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 px-4 py-3 rounded-md mb-4 text-sm">
           {error}
         </p>
       )}
-      
+
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* form-row -> div con clases de espaciado */}
         <div>
@@ -72,13 +72,13 @@ const RegisterForm = () => {
     <div className="w-full text-gray-900 dark:text-gray-100">
       <h2 className="text-center text-2xl font-bold mb-1">Crear Cuenta de Club</h2>
       <p className="text-center text-gray-500 dark:text-gray-400 mb-6">Comienza a gestionar tu club</p>
-      
+
       <div className="text-center space-y-4">
         <p className="text-gray-600 dark:text-gray-400">
           Para crear un nuevo club, te guiaremos a través de un formulario completo donde podrás registrar los datos de tu club y del administrador.
         </p>
         <button onClick={handleRedirectToRegisterClub} className="w-full bg-green-600 text-white py-3 rounded-md font-semibold hover:bg-green-700 transition-colors duration-300 mt-4">Continuar al Registro del Club</button>
-        
+
         {/* Separador */}
         <div className="relative py-4">
           <div className="absolute inset-0 flex items-center">
@@ -94,7 +94,7 @@ const RegisterForm = () => {
           <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
             ¿Recibiste una invitación de un club?
           </p>
-          <Link 
+          <Link
             to="/aceptar-invitacion"
             className="text-blue-600 dark:text-blue-400 font-bold hover:underline text-sm"
           >
@@ -118,7 +118,7 @@ function Home() {
 
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-green-900/10 dark:to-blue-900/10 p-4 transition-colors duration-300 relative overflow-hidden">
+    <div className="flex flex-col min-h-screen w-full items-center justify-center bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-green-900/10 dark:to-blue-900/10 p-4 transition-colors duration-300 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-0 w-96 h-96 bg-green-400/20 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
@@ -131,7 +131,7 @@ function Home() {
       </div>
 
       {/* Contenedor principal */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
@@ -151,9 +151,9 @@ function Home() {
               backgroundImage: `repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(255,255,255,0.1) 40px, rgba(255,255,255,0.1) 80px)`,
             }}></div>
           </div>
-          
+
           <div className="relative z-10">
-            <motion.div 
+            <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
@@ -163,7 +163,7 @@ function Home() {
                 <VisionCoachLogo className="w-28 h-28 drop-shadow-2xl" />
               </div>
             </motion.div>
-            <motion.h1 
+            <motion.h1
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3 }}
@@ -181,7 +181,7 @@ function Home() {
                 Plataforma Profesional
               </p>
             </motion.div>
-            <motion.p 
+            <motion.p
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.5 }}
@@ -202,7 +202,7 @@ function Home() {
               Vision Coach
             </h2>
           </div>
-          
+
           {/* Toggle buttons with gradient */}
           <div className="flex mb-8 rounded-xl bg-gradient-to-r from-green-100 via-blue-100 to-purple-100 dark:from-gray-700 dark:via-gray-700 dark:to-gray-700 p-1.5 shadow-inner">
             <motion.button
@@ -212,9 +212,9 @@ function Home() {
             >
               Iniciar Sesión
             </motion.button>
-            <motion.button 
+            <motion.button
               whileTap={{ scale: 0.95 }}
-              onClick={() => setAuthMode('register')} 
+              onClick={() => setAuthMode('register')}
               className={`${buttonBaseClasses} ${authMode === 'register' ? activeClasses : inactiveClasses}`}
             >
               Registrar Club
@@ -225,7 +225,7 @@ function Home() {
 
           <div className="text-center mt-4">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {authMode === 'login' 
+              {authMode === 'login'
                 ? <>¿No tienes una cuenta? <button onClick={() => setAuthMode('register')} className="font-semibold text-blue-600 hover:underline">Regístrate aquí</button>.</>
                 : <>¿Ya tienes una cuenta? <button onClick={() => setAuthMode('login')} className="font-semibold text-blue-600 hover:underline">Inicia sesión</button>.</>
               }
@@ -234,6 +234,16 @@ function Home() {
 
         </div>
       </motion.div>
+
+      {/* Footer Legal */}
+      <footer className="relative z-10 mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
+        <div className="space-x-4">
+          <Link to="/legales/privacidad" className="hover:text-gray-900 dark:hover:text-white transition-colors hover:underline">Política de Privacidad</Link>
+          <span>•</span>
+          <Link to="/legales/terminos" className="hover:text-gray-900 dark:hover:text-white transition-colors hover:underline">Términos y Condiciones</Link>
+        </div>
+        <p className="mt-2 text-xs opacity-70">© {new Date().getFullYear()} Vision Coach. Todos los derechos reservados.</p>
+      </footer>
 
       <style>{`
         @keyframes blob {
